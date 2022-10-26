@@ -12,7 +12,7 @@
 #define T_RUNNING 	1
 #define T_READY 	2
 #define T_BLOCKED 	3
-#define T_ZOMBIE 	4
+#define T_EXITED	4
 
 struct uthread_tcb {
 	/* TODO Phase 2 */
@@ -40,11 +40,13 @@ void uthread_yield(void)
 void uthread_exit(void)
 {
 	/* TODO Phase 2 */
+        curr_thread->state = T_EXITED;
+        uthread_yeild();
 }
 
 int uthread_create(uthread_func_t func, void *arg)
 {
-	/* TODO Phase 2 */
+	/* Phase 2 */
         uthread_tcb *new_thread = malloc(sizeof(uthread_tcb));
         if (new_thread == NULL) return -1;
 
