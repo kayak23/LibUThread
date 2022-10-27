@@ -1,16 +1,24 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include "queue.h"
 
+#ifndef QUEUE_H
+#define QUEUE_H
+#include "queue.h"
+#endif
+
+#ifndef RET_SUCCESS
 #define RET_SUCCESS 0
+#endif
+#ifndef RET_FAILURE
 #define RET_FAILURE -1
+#endif
 
 typedef struct q_node* node_t;
 
 struct q_node {
 	node_t next;
-	node_t prev; //TODO: eliminate if unused
+	node_t prev;
 	void *data;
 };
 
@@ -132,7 +140,7 @@ int queue_length(queue_t queue)
 }
 
 #include <stdio.h>
-
+/*
 static void q_print(queue_t queue, void *data)
 {
 	printf("%s\n", (char*)data);
@@ -142,6 +150,7 @@ static void q_delete(queue_t queue, void *data)
 {
 	queue_delete(queue, data);
 }
+
 
 int main() {
         queue_t queue;
@@ -175,5 +184,5 @@ int main() {
 	printf("Collected value: %s\n", *(char**)collector);
 	printf("Done!\n");
         return 0;
-}
+}*/
 

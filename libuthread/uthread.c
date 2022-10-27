@@ -8,6 +8,7 @@
 
 #include "private.h"
 #include "uthread.h"
+#include "queue.h"
 
 #ifndef RET_FAILURE
 #define RET_FAILURE -1
@@ -30,8 +31,7 @@ struct uthread_tcb {
 	int state;
 };
 
-static queue_t thread_queue;
-static struct uthread_tcb *idle_thread; // changed from queue_t to uthread_tcb
+static struct queue* thread_queue;
 static struct uthread_tcb *curr_thread;
 
 struct uthread_tcb *uthread_current(void)
@@ -43,24 +43,25 @@ struct uthread_tcb *uthread_current(void)
 void uthread_yield(void)
 {
 	/* TODO Phase 2 USE LOCKS HERE IN FUTURE (PROBABLY) */
+	struct uthread_tcb *tail = curr_thread;
 	if (curr_thread->state != T_EXITED || curr_thread->state != T_BLOCKED)
 		curr_thread->state = T_READY;
 	queue_enqueue(thread_queue, curr_thread);
-	queue_dequeue(thread_queue, &curr_thread);
+	queue_dequeue(thread_queue, (void**)&curr_thread);
 	curr_thread->state = T_RUNNING;
-	uthread_ctx_switch(thread_queue->tail->context, curr_thread->context);
+	uthread_ctx_switch(tail->context, curr_thread->context);
 }
 
 void uthread_exit(void)
 {
 	/* TODO Phase 2 USE LOCKS HERE IN FUTURE (PROBABLY) */
         curr_thread->state = T_EXITED;
-        uthread_yeild();
+        uthread_yield();
 }
 
 int uthread_create(uthread_func_t func, void *arg)
 {
-        uthread_tcb *new_thread;
+        struct uthread_tcb *new_thread;
         if ((new_thread = malloc(sizeof(struct uthread_tcb))) == NULL)
 		return RET_FAILURE;
         if ((new_thread->context = malloc(sizeof(uthread_ctx_t))) == NULL)
@@ -74,11 +75,12 @@ int uthread_create(uthread_func_t func, void *arg)
         return RET_SUCCESS;
 }
 
-static void delete_zombies(queue_t queue, void *thread)
+static void delete_zombies(queue_t queue, void *data)
 {
+	struct uthread_tcb *thread = data;
 	if (thread->state == T_EXITED)
 	{
-		queue_delete(thread_queue, thread);
+		queue_delete(queue, thread);
 		free(thread->context);
 		uthread_ctx_destroy_stack(thread->stack);
 		free(thread);
@@ -89,36 +91,31 @@ static void delete_zombies(queue_t queue, void *thread)
 int uthread_run(bool preempt, uthread_func_t func, void *arg)
 {
 	/*  Phase 2 */
-
+	if(preempt || !preempt)
+		fprintf(stderr, "Hello!\n");
 	/* build the thread queue */
 	if ((thread_queue = queue_create()) == NULL) 
 		return RET_FAILURE;
 	/* Build the idle thread */
 	if(uthread_create(NULL, NULL) < 0)
 		return RET_FAILURE;
-	queue_dequeue(thread_queue, &curr_thread);
+	queue_dequeue(thread_queue, (void**)&curr_thread);
 	curr_thread->state = T_RUNNING;
 	/* Build the initial thread */
 	if(uthread_create(func, arg) < 0)
 		return RET_FAILURE;
-        /* 
-         * When there are no more threads which are ready to run
-         * in the system, stops the idle loop and returns.
-         * Or simply yields to next available thread.
-         * 
-         * (It could also deal with threads that
-         * reached completion and destroys
-         * their associated TCB.)
-         */
+        /* Begin the idle loop */
 	do {
 		queue_iterate(thread_queue, delete_zombies);
-	} while (queue_length(thred_queue));
+		uthread_yield();
+	} while (queue_length(thread_queue));
 
-        uthread_ctx_destroy_stack(idle_thread->stack);
-	free(idle_thread->context);
-        free(idle_thread);
+        uthread_ctx_destroy_stack(curr_thread->stack);
+	queue_destroy(thread_queue);
+	free(curr_thread->context);
+        free(curr_thread);
 
-        return 0;
+        return RET_SUCCESS;
 }
 
 /* for both of these guys, use locks in the future */
