@@ -43,24 +43,31 @@ struct uthread_tcb *uthread_current(void)
 void uthread_yield(void)
 {
 	/* TODO Phase 2 USE LOCKS HERE IN FUTURE (PROBABLY) */
+	//fprintf(stderr, "[yield] Beginning yield procedure\n");
 	struct uthread_tcb *tail = curr_thread;
-	if (curr_thread->state != T_EXITED || curr_thread->state != T_BLOCKED)
+	if (curr_thread->state != T_EXITED && curr_thread->state != T_BLOCKED)
 		curr_thread->state = T_READY;
+	//fprintf(stderr, "[yield] State codes set\n");
 	queue_enqueue(thread_queue, curr_thread);
+	//fprintf(stderr, "[yield] Thread enqueued\n");
 	queue_dequeue(thread_queue, (void**)&curr_thread);
+	//fprintf(stderr, "[yield] Thread dequeued\n");
 	curr_thread->state = T_RUNNING;
 	uthread_ctx_switch(tail->context, curr_thread->context);
+	//fprintf(stderr, "[yield] Yield procedure completed\n");
 }
 
 void uthread_exit(void)
 {
 	/* TODO Phase 2 USE LOCKS HERE IN FUTURE (PROBABLY) */
+	//fprintf(stderr, "[exit] A thread was terminated\n");
         curr_thread->state = T_EXITED;
         uthread_yield();
 }
 
 int uthread_create(uthread_func_t func, void *arg)
 {
+	//fprintf(stderr, "[ucreate] Creating a thread\n");
         struct uthread_tcb *new_thread;
         if ((new_thread = malloc(sizeof(struct uthread_tcb))) == NULL)
 		return RET_FAILURE;
@@ -72,19 +79,25 @@ int uthread_create(uthread_func_t func, void *arg)
                 return RET_FAILURE;
         new_thread->state = T_READY;
         queue_enqueue(thread_queue, new_thread);
+	//fprintf(stderr, "[ucreate] Created a thread\n");
         return RET_SUCCESS;
 }
 
 static void delete_zombies(queue_t queue, void *data)
 {
+	//fprintf(stderr, "[DZ] Deleting zombies\n");
 	struct uthread_tcb *thread = data;
+	//fprintf(stderr, "[DZ] Thread code: %d\n", thread->state);
 	if (thread->state == T_EXITED)
 	{
+		//fprintf(stderr, "[DZ] Found a zombie!\n");
 		queue_delete(queue, thread);
 		free(thread->context);
 		uthread_ctx_destroy_stack(thread->stack);
 		free(thread);
+		//fprintf(stderr, "[DZ] Beheaded a zombie.\n");
 	}
+	//fprintf(stderr, "[DZ] Finished deleting zombies\n");
 
 }
 
@@ -105,9 +118,12 @@ int uthread_run(bool preempt, uthread_func_t func, void *arg)
 	if(uthread_create(func, arg) < 0)
 		return RET_FAILURE;
         /* Begin the idle loop */
+	//int i = 0;
 	do {
+		//fprintf(stderr, "[idle] Entering cycle %d\n", i);
 		queue_iterate(thread_queue, delete_zombies);
 		uthread_yield();
+		//fprintf(stderr, "[idle] Exiting cycle %d\n", i++);
 	} while (queue_length(thread_queue));
 
         uthread_ctx_destroy_stack(curr_thread->stack);

@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h> //remove after debug version
 
 #ifndef QUEUE_H
 #define QUEUE_H
@@ -54,18 +55,29 @@ int queue_enqueue(queue_t queue, void *data)
 		return RET_FAILURE;
 	if((node = malloc(sizeof(struct q_node))) == NULL)
 		return RET_FAILURE;
+	//fprintf(stderr, "[enqueue] Beginning enqueue procedure\n");
         node->data = data;
         node->next = NULL;
         node->prev = NULL;
+	//fprintf(stderr, "[enqueue] Values init'd\n");
         if (queue->len == 0) {
                 queue->head = node;
                 queue->tail = node;
         } else {
+		/*if(queue->tail == NULL) {
+			fprintf(stderr, "[enqueue] Error! Null tail pointer!\n");
+			return RET_FAILURE;
+		}*/
+		//fprintf(stderr, "[enqueue] Setting queue params...");
                 queue->tail->next = node;
+		//fprintf(stderr, "tail->next done...");
                 node->prev = queue->tail;
+		//fprintf(stderr, "node->prev done...");
                 queue->tail = node;
+		//fprintf(stderr, "queue->tail done\n");
         }
         queue->len++;
+	//fprintf(stderr, "[enqueue] Enqueue procedure completed\n");
         return RET_SUCCESS;
 }
 
@@ -75,11 +87,11 @@ int queue_dequeue(queue_t queue, void **data)
 		return RET_FAILURE;
 
 	*data = queue->head->data;
+	node_t new_head = queue->head->next;
 
         queue->head->data = NULL;
         queue->head->next = NULL;
         queue->head->prev = NULL;
-        node_t new_head = queue->head->next;
 	free(queue->head);
         queue->head = new_head;
 	
@@ -90,6 +102,7 @@ int queue_dequeue(queue_t queue, void **data)
                 queue->head->prev = NULL;
 
         queue->len--;
+	//fprintf(stderr, "[dequeue] Queue size is now %d\n", queue->len);
         return RET_SUCCESS;
 }
 

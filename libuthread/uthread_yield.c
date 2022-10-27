@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <uthread.h>
+#include "uthread.h"
 
 void thread3(void *arg)
 {
