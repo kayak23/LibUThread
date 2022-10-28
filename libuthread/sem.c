@@ -13,6 +13,8 @@
 #define RET_SUCCESS 0
 #endif
 
+typedef struct uthread_tcb* uthread_t;
+
 struct semaphore {
 	int count;
 	queue_t q_blocked;
@@ -60,7 +62,7 @@ int sem_down(sem_t sem)
 
 	/* If sem count is zero, we block ourselves */
 	if (sem->count == 0) {
-		uthead_t self = uthread_current();
+		uthread_t self = uthread_current();
 		queue_enqueue(sem->q_blocked, self);
 		uthread_block();
 	}

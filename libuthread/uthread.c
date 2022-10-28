@@ -23,13 +23,12 @@
 #define T_BLOCKED 	3
 #define T_EXITED	4
 
-typedef struct uthread_tcb* uthread_t;
-
 /* Changed from stack_t to void */
 struct uthread_tcb {
+	/* TODO Phase 2 */
 	uthread_ctx_t *context;
+	void *stack; //where is this defined? is it from signal.h? uthread_ctx_t has a stack member
 	int state;
-        void *stack;
 };
 
 static struct queue* thread_queue;
@@ -44,28 +43,16 @@ struct uthread_tcb *uthread_current(void)
 void uthread_yield(void)
 {
 	/* TODO Phase 2 USE LOCKS HERE IN FUTURE (PROBABLY) */
-        //fprintf(stderr, "[yield] Beginning yield procedure\n");
-
-        /* create tail temp and set it equal to the current thread */
-	uthread_t *tail = curr_thread;
-	if (curr_thread->state == T_RUNNING && 
-            curr_thread->state != T_EXITED && 
-            curr_thread->state != T_BLOCKED)
+	//fprintf(stderr, "[yield] Beginning yield procedure\n");
+	struct uthread_tcb *tail = curr_thread;
+	if (curr_thread->state != T_EXITED && curr_thread->state != T_BLOCKED)
 		curr_thread->state = T_READY;
-        //fprintf(stderr, "[yield] State codes set\n");
-
-        /* We pop current thread from queue */
-	queue_dequeue(thread_queue, (void**) &curr_thread);
-	//fprintf(stderr, "[yield] Thread dequeued\n");
-        
-        /* Send tail temp (whis is our current thread) to the back of the queue */
-	queue_enqueue(thread_queue, tail);
+	//fprintf(stderr, "[yield] State codes set\n");
+	queue_enqueue(thread_queue, curr_thread);
 	//fprintf(stderr, "[yield] Thread enqueued\n");
-
-        /* Set the state of the next thread to RUNNING*/
+	queue_dequeue(thread_queue, (void**)&curr_thread);
+	//fprintf(stderr, "[yield] Thread dequeued\n");
 	curr_thread->state = T_RUNNING;
-
-        /* Context switch from current thread to tail*/
 	uthread_ctx_switch(tail->context, curr_thread->context);
 	//fprintf(stderr, "[yield] Yield procedure completed\n");
 }
@@ -84,17 +71,12 @@ int uthread_create(uthread_func_t func, void *arg)
         struct uthread_tcb *new_thread;
         if ((new_thread = malloc(sizeof(struct uthread_tcb))) == NULL)
 		return RET_FAILURE;
-
         if ((new_thread->context = malloc(sizeof(uthread_ctx_t))) == NULL)
 		return RET_FAILURE;
-
-        //Should we just use the stack from context?
         if ((new_thread->stack = uthread_ctx_alloc_stack()) == NULL)
 		return RET_FAILURE;
-
         if (uthread_ctx_init(new_thread->context, new_thread->stack, func, arg) < 0)
                 return RET_FAILURE;
-
         new_thread->state = T_READY;
         queue_enqueue(thread_queue, new_thread);
 	//fprintf(stderr, "[ucreate] Created a thread\n");
@@ -104,9 +86,10 @@ int uthread_create(uthread_func_t func, void *arg)
 static void delete_zombies(queue_t queue, void *data)
 {
 	//fprintf(stderr, "[DZ] Deleting zombies\n");
-	uthread_t thread = data;
+	struct uthread_tcb *thread = data;
 	//fprintf(stderr, "[DZ] Thread code: %d\n", thread->state);
-	if (thread->state == T_EXITED) {
+	if (thread->state == T_EXITED)
+	{
 		//fprintf(stderr, "[DZ] Found a zombie!\n");
 		queue_delete(queue, thread);
 		free(thread->context);
@@ -115,6 +98,7 @@ static void delete_zombies(queue_t queue, void *data)
 		//fprintf(stderr, "[DZ] Beheaded a zombie.\n");
 	}
 	//fprintf(stderr, "[DZ] Finished deleting zombies\n");
+
 }
 
 int uthread_run(bool preempt, uthread_func_t func, void *arg)
@@ -122,28 +106,24 @@ int uthread_run(bool preempt, uthread_func_t func, void *arg)
 	/*  Phase 2 */
 	if(preempt || !preempt)
 		fprintf(stderr, "Hello!\n");
-
 	/* build the thread queue */
 	if ((thread_queue = queue_create()) == NULL) 
 		return RET_FAILURE;
-
 	/* Build the idle thread */
 	if(uthread_create(NULL, NULL) < 0)
 		return RET_FAILURE;
 	queue_dequeue(thread_queue, (void**)&curr_thread);
 	curr_thread->state = T_RUNNING;
-
 	/* Build the initial thread */
 	if(uthread_create(func, arg) < 0)
 		return RET_FAILURE;
-
         /* Begin the idle loop */
 	//int i = 0;
 	do {
-                //fprintf(stderr, "[idle] Entering cycle %d\n", i);
-                queue_iterate(thread_queue, delete_zombies);
-                uthread_yield();
-                //fprintf(stderr, "[idle] Exiting cycle %d\n", i++);
+		//fprintf(stderr, "[idle] Entering cycle %d\n", i);
+		queue_iterate(thread_queue, delete_zombies);
+		uthread_yield();
+		//fprintf(stderr, "[idle] Exiting cycle %d\n", i++);
 	} while (queue_length(thread_queue));
 
         uthread_ctx_destroy_stack(curr_thread->stack);
@@ -163,10 +143,9 @@ void uthread_block(void)
 	uthread_yield();
 }
 
-void uthread_unblock(uthread_t uthread)
+void uthread_unblock(struct uthread_tcb *uthread)
 {
 	/* TODO Phase 4 */
 	uthread->state = T_READY;
 	uthread_yield(); //I don't have justification for this but it makes sense intuitively
 }
-

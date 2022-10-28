@@ -1,0 +1,37 @@
+uthread: uthread_hello uthread_yield
+
+sem: sem_buffer sem_count sem_prime sem_simple
+
+uthread_hello:
+	gcc -Wall -Werror -Wextra -o $@ uthread_hello.c context.c queue.c uthread.c preempt.c
+	@echo uthread_hello
+
+uthread_yield:
+	gcc -Wall -Werror -Wextra -o $@ uthread_yield.c context.c queue.c uthread.c preempt.c
+	@echo uthread_yield
+
+sem_buffer:
+	gcc -Wall -Werror -Wextra -o $@ sem_buffer.c context.c queue.c uthread.c preempt.c sem.c
+	@echo sem_buffer
+
+sem_count:
+	gcc -Wall -Werror -Wextra -o $@ sem_count.c context.c queue.c uthread.c preempt.c sem.c
+	@echo sem_count
+
+sem_prime:
+	gcc -Wall -Werror -Wextra -o $@ sem_prime.c context.c queue.c uthread.c preempt.c sem.c
+	@echo sem_prime
+
+sem_simple:
+	gcc -Wall -Werror -Wextra -o $@ sem_simple.c context.c queue.c uthread.c preempt.c sem.c
+	@echo sem_simple
+
+clean_sem:
+	rm sem_count
+	rm sem_prime
+	rm sem_simple
+	rm sem_buffer
+
+clean_uthread:
+	rm uthread_yield
+	rm uthread_hello
