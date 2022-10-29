@@ -153,5 +153,5 @@ void uthread_unblock(struct uthread_tcb *uthread)
 {
 	/* TODO Phase 4 */
 	uthread->state = T_READY;
-	uthread_yield(); //I don't have justification for this but it makes sense intuitively
+	//uthread_yield(); //I think this was a mistake...I'll explain why later.y
 }
