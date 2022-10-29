@@ -28,7 +28,7 @@
  */
 #define HZ 100
 
-static struct itimerval *alarm;
+static struct itimerval *timer;
 static sigset_t *blocker;
 static bool enabled;
 
@@ -57,8 +57,7 @@ void preempt_start(bool preempt)
 {
 	if(preempt) {
 		/* we want a virtual timer */
-		struct itimerval *timer = malloc(sizeof(struct itimerval));
-		alarm = timer;
+		timer = malloc(sizeof(struct itimerval));
 		enabled = true;
 		if(signal(SIGALRM, alarm_yield) == SIG_ERR)
 			fprintf(stderr, "Signal Error\n");
@@ -79,8 +78,8 @@ void preempt_stop(void)
 {
 	/* TODO Phase 4 */
 	if(enabled) {
-		alarm->it_value.tv_usec = 0; //disables the timer
-		free(alarm);
+		timer->it_value.tv_usec = 0; //disables the timer
+		free(timer);
 		if(signal(SIGVTALRM, SIG_DFL) == SIG_ERR)
 			fprintf(stderr, "DFL Signal Error\n");
 	}
