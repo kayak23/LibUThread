@@ -52,12 +52,15 @@ void uthread_yield(void)
 	if (curr_thread->state == T_RUNNING)
 		curr_thread->state = T_READY;
 	//fprintf(stderr, "[yield] State codes set\n");
-	queue_enqueue(thread_queue, curr_thread);
-	//fprintf(stderr, "[yield] Thread enqueued\n");
-	queue_dequeue(thread_queue, (void**)&curr_thread);
+	do {
+		queue_enqueue(thread_queue, curr_thread);
+		//fprintf(stderr, "[yield] Thread enqueued\n");
+		queue_dequeue(thread_queue, (void**)&curr_thread);
+	} while (curr_thread->state != T_READY);
 	//fprintf(stderr, "[yield] Thread dequeued\n");
-	if (curr_thread->state == T_READY) //catches race condition in phase 4
-		curr_thread->state = T_RUNNING;
+	//if (curr_thread == NULL)
+	//	fprintf(stderr, "[yield] Error! curr_thread is null!\n");
+	//fprintf(stderr, "[yield] Switching context\n");
 	uthread_ctx_switch(tail->context, curr_thread->context);
 	//fprintf(stderr, "[yield] Yield procedure completed\n");
 }
