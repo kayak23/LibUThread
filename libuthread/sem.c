@@ -5,12 +5,10 @@
 #include "sem.h"
 #include "private.h"
 
-#ifndef RET_FAILURE
-#define RET_FAILURE -1
-#endif
-
-#ifndef RET_SUCCESS
+#ifndef RETVALS
+#define RETVAlS
 #define RET_SUCCESS 0
+#define RET_FAILURE -1
 #endif
 
 typedef struct uthread_tcb* uthread_t;

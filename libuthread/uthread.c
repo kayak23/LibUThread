@@ -10,11 +10,9 @@
 #include "uthread.h"
 #include "queue.h"
 
-#ifndef RET_FAILURE
+#ifndef RETVALS
+#define RETVALS
 #define RET_FAILURE -1
-#endif
-
-#ifndef RET_SUCCESS
 #define RET_SUCCESS 0
 #endif
 
@@ -40,19 +38,26 @@ struct uthread_tcb *uthread_current(void)
 	return curr_thread;
 }
 
+/* When implementing preemption we will need to ensure that we do not
+ * context switch back to zombies; maybe a zombie semaphore in 
+ * destroy zombies?
+ *
+ * */
 void uthread_yield(void)
 {
 	/* TODO Phase 2 USE LOCKS HERE IN FUTURE (PROBABLY) */
 	//fprintf(stderr, "[yield] Beginning yield procedure\n");
 	struct uthread_tcb *tail = curr_thread;
-	if (curr_thread->state != T_EXITED && curr_thread->state != T_BLOCKED)
+	//if (curr_thread->state != T_EXITED && curr_thread->state != T_BLOCKED)
+	if (curr_thread->state == T_RUNNING)
 		curr_thread->state = T_READY;
 	//fprintf(stderr, "[yield] State codes set\n");
 	queue_enqueue(thread_queue, curr_thread);
 	//fprintf(stderr, "[yield] Thread enqueued\n");
 	queue_dequeue(thread_queue, (void**)&curr_thread);
 	//fprintf(stderr, "[yield] Thread dequeued\n");
-	curr_thread->state = T_RUNNING;
+	if (curr_thread->state == T_READY) //catches race condition in phase 4
+		curr_thread->state = T_RUNNING;
 	uthread_ctx_switch(tail->context, curr_thread->context);
 	//fprintf(stderr, "[yield] Yield procedure completed\n");
 }
@@ -119,13 +124,14 @@ int uthread_run(bool preempt, uthread_func_t func, void *arg)
 		return RET_FAILURE;
         /* Begin the idle loop */
 	//int i = 0;
-	do {
+	while(queue_length(thread_queue)) {
 		//fprintf(stderr, "[idle] Entering cycle %d\n", i);
 		queue_iterate(thread_queue, delete_zombies);
 		uthread_yield();
 		//fprintf(stderr, "[idle] Exiting cycle %d\n", i++);
-	} while (queue_length(thread_queue));
-
+	}
+	
+	/* cleanup */
         uthread_ctx_destroy_stack(curr_thread->stack);
 	queue_destroy(thread_queue);
 	free(curr_thread->context);

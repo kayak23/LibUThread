@@ -8,10 +8,9 @@
 #include "queue.h"
 #endif
 
-#ifndef RET_SUCCESS
+#ifndef RETVALS
+#define RETVALS
 #define RET_SUCCESS 0
-#endif
-#ifndef RET_FAILURE
 #define RET_FAILURE -1
 #endif
 
