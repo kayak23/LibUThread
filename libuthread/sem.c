@@ -2,9 +2,20 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#ifndef QUEUE_H
+#define QUEUE_H
 #include "queue.h"
+#endif
+
+#ifndef SEM_H
+#define SEM_H
 #include "sem.h"
+#endif
+
+#ifndef PRIV_H
+#define PRIV_H
 #include "private.h"
+#endif
 
 #ifndef RETVALS
 #define RETVAlS

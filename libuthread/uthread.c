@@ -6,9 +6,20 @@
 #include <stdlib.h>
 #include <sys/time.h>
 
+#ifndef PRIV_H
+#define PRIV_H
 #include "private.h"
+#endif
+
+#ifndef UTHD_H
+#define UTHD_H
 #include "uthread.h"
+#endif
+
+#ifndef QUEUE_H
+#define QUEUE_H
 #include "queue.h"
+#endif
 
 #ifndef RETVALS
 #define RETVALS
@@ -45,14 +56,22 @@ struct uthread_tcb *uthread_current(void)
  * */
 void uthread_yield(void)
 {
+	preempt_disable();
 	/* TODO Phase 2 USE LOCKS HERE IN FUTURE (PROBABLY) */
 	//fprintf(stderr, "[yield] Beginning yield procedure\n");
 	struct uthread_tcb *tail = curr_thread;
+	//struct uthread_tcb new;
 	//if (curr_thread->state != T_EXITED && curr_thread->state != T_BLOCKED)
 	if (curr_thread->state == T_RUNNING)
 		curr_thread->state = T_READY;
 	//fprintf(stderr, "[yield] State codes set\n");
-	do {
+	do {/*
+		if (curr_thread->state == T_EXITED) {
+			struct uthread_tcb *thread = curr_thread;
+			free(thread->context);
+			uthread_ctx_destroy_stack(thread->stack);
+			free(thread);
+		}*/
 		queue_enqueue(thread_queue, curr_thread);
 		//fprintf(stderr, "[yield] Thread enqueued\n");
 		queue_dequeue(thread_queue, (void**)&curr_thread);
@@ -61,6 +80,9 @@ void uthread_yield(void)
 	//if (curr_thread == NULL)
 	//	fprintf(stderr, "[yield] Error! curr_thread is null!\n");
 	//fprintf(stderr, "[yield] Switching context\n");
+	curr_thread->state = T_RUNNING;
+	//new = *curr_thread;
+	preempt_enable(); //always the possibility that there a SIGVTALRM is received here *skull emoji*
 	uthread_ctx_switch(tail->context, curr_thread->context);
 	//fprintf(stderr, "[yield] Yield procedure completed\n");
 }
@@ -99,10 +121,12 @@ static void delete_zombies(queue_t queue, void *data)
 	if (thread->state == T_EXITED)
 	{
 		//fprintf(stderr, "[DZ] Found a zombie!\n");
+		preempt_disable();
 		queue_delete(queue, thread);
 		free(thread->context);
 		uthread_ctx_destroy_stack(thread->stack);
 		free(thread);
+		preempt_enable();
 		//fprintf(stderr, "[DZ] Beheaded a zombie.\n");
 	}
 	//fprintf(stderr, "[DZ] Finished deleting zombies\n");
@@ -127,13 +151,14 @@ int uthread_run(bool preempt, uthread_func_t func, void *arg)
 		return RET_FAILURE;
         /* Begin the idle loop */
 	//int i = 0;
+	preempt_start(preempt);
 	while(queue_length(thread_queue)) {
 		//fprintf(stderr, "[idle] Entering cycle %d\n", i);
 		queue_iterate(thread_queue, delete_zombies);
 		uthread_yield();
 		//fprintf(stderr, "[idle] Exiting cycle %d\n", i++);
 	}
-	
+	preempt_stop();
 	/* cleanup */
         uthread_ctx_destroy_stack(curr_thread->stack);
 	queue_destroy(thread_queue);
