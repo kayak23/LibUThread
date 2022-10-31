@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #include "queue.h"
 
@@ -21,10 +22,12 @@ do {									\
 	}									\
 } while(0)
 
+typedef struct queue* queue_t;
+
 /* Increment */
 static void q_increment(queue_t q, void *data)
 {
-	*data += 10;
+	*(int*)data += 10;
 }
 
 /* print queue */
@@ -66,21 +69,19 @@ void test_dequeue_empty(void)
 
 	q = queue_create();
 	retval = queue_dequeue(q, (void**)&ptr);
-	TEST_ASSRT(retval == RET_FAILURE);
+	TEST_ASSERT(retval == RET_FAILURE);
 }
 
 /* Enqueue NULL */
 void test_enqueue_null(void)
 {
-	int *ptr;
 	int retval;
-	queue_t q;
+	queue_t q = queue_create();
 	
 	fprintf(stderr, "*** TEST enqueue_null ***\n");
 
-	q = queue_create();
 	retval = queue_enqueue(q, NULL);
-	TEST_ASSRT(retval == RET_FAILURE);
+	TEST_ASSERT(retval == RET_FAILURE);
 }
 
 /* Enqueue to NULL */
@@ -88,13 +89,11 @@ void test_enqueue_to_null(void)
 {
 	int data = 42;
 	int retval;
-	queue_t q;
 	
 	fprintf(stderr, "*** TEST enqueue_to_null ***\n");
 
-	q = queue_create();
 	retval = queue_enqueue(NULL, &data);
-	TEST_ASSRT(retval == RET_FAILURE);
+	TEST_ASSERT(retval == RET_FAILURE);
 }
 
 /* Dequeue from NULL */
@@ -102,63 +101,74 @@ void test_dequeue_null(void)
 {
 	int *ptr;
 	int retval;
-	queue_t q;
-	
+
 	fprintf(stderr, "*** TEST dequeue_null ***\n");
 
-	q = queue_create();
 	retval = queue_dequeue(NULL, (void**)&ptr);
-	TEST_ASSRT(retval == RET_FAILURE);
+	TEST_ASSERT(retval == RET_FAILURE);
 }
 
 /* Enqueue 50 Dequeue 50 */
 void test_enqueue_dequeue_50(void)
 {
+	int i;
+	int j[50];
+	bool pass = true;
 	queue_t q;
 
 	fprintf(stderr, "*** TEST enqueue_dequeue_50 ***\n");
-
+	
 	q = queue_create();
-	for (int i = 0; i < 50; i++) {
-		int e_ret = queue_enqueue(q, i);
-		TEST_ASSERT(e_ret == RET_SUCCESS);
+	for (i = 0; i < 50; i++) {
+		if(!pass) break;
+		j[i] = i;
+		int e_ret = queue_enqueue(q, (void*)(j+i));
+		pass = (e_ret == RET_SUCCESS);
 	}
-	for (int j = 0; j < 50; i++) {
+	for (i = 0; i < 50; i++) {
+		if(!pass) break;
+		int *ptr;
 		int d_ret = queue_dequeue(q, (void**)&ptr);
-		TEST_ASSERT(d_ret == RET_SUCCESS);
+		pass = (d_ret == RET_SUCCESS && *ptr == j[i]);
 	}
-	TEST_ASSERT(queue_length(q) == 0);
+	TEST_ASSERT(pass && queue_length(q) == 0);
 }
 
 /* Queue Length */
 void test_queue_length(void)
 {
+	int i;
+	int j[11];
+	bool pass = true;
 	queue_t q;
 
 	fprintf(stderr, "*** TEST queue_length ***\n");
 
 	q = queue_create();
-	for (int i = 0; i < 11; i++) {
-		int e_ret = queue_enqueue(q, i);
-		TEST_ASSERT(e_ret == RET_SUCCESS);
+	for (i = 0; i < 11; i++) {
+		if(!pass) break;
+		j[i] = i;
+		int e_ret = queue_enqueue(q, (void*)(j+i));
+		pass = (e_ret == RET_SUCCESS);
 	}
-	TEST_ASSERT(queue_length(q) == 11);
+	TEST_ASSERT(pass && queue_length(q) == 11); //queue does not free
 }
 
 /* Queue iterate increment */
-void test_  queue_iterate_increment(void)
+void test_queue_iterate_increment(void)
 {
 	queue_t q;
+	int i[5] = {0, 1, 2, 3, 4};
 
 	fprintf(stderr, "*** TEST queue_iterate_increment ***\n");
 
 	q = queue_create();
 
-	queue_enqueue(q, 0);
-	queue_enqueue(q, 1);
-	queue_enqueue(q, 2);
-	queue_enqueue(q, 3);
-	queue_enqueue(q, 4);
+	queue_enqueue(q, (void*)i);
+	queue_enqueue(q, (void*)i+1);
+	queue_enqueue(q, (void*)i+2);
+	queue_enqueue(q, (void*)i+3);
+	queue_enqueue(q, (void*)i+4);
 
 	queue_iterate(q, q_increment);
 	queue_iterate(q, q_print);
