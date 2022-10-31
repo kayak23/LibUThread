@@ -22,8 +22,6 @@ do {									\
 	}									\
 } while(0)
 
-typedef struct queue* queue_t;
-
 /* Increment */
 static void q_increment(queue_t q, void *data)
 {
@@ -165,10 +163,10 @@ void test_queue_iterate_increment(void)
 	q = queue_create();
 
 	queue_enqueue(q, (void*)i);
-	queue_enqueue(q, (void*)i+1);
-	queue_enqueue(q, (void*)i+2);
-	queue_enqueue(q, (void*)i+3);
-	queue_enqueue(q, (void*)i+4);
+	queue_enqueue(q, (void*)(i+1));
+	queue_enqueue(q, (void*)(i+2));
+	queue_enqueue(q, (void*)(i+3));
+	queue_enqueue(q, (void*)(i+4));
 
 	queue_iterate(q, q_increment);
 	queue_iterate(q, q_print);
