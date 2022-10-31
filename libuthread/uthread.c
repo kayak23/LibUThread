@@ -136,23 +136,23 @@ static void delete_zombies(queue_t queue, void *data)
 int uthread_run(bool preempt, uthread_func_t func, void *arg)
 {
 	/*  Phase 2 */
-	if(preempt || !preempt)
+	if (preempt || !preempt)
 		fprintf(stderr, "Hello!\n");
 	/* build the thread queue */
 	if ((thread_queue = queue_create()) == NULL) 
 		return RET_FAILURE;
 	/* Build the idle thread */
-	if(uthread_create(NULL, NULL) < 0)
+	if (uthread_create(NULL, NULL) < 0)
 		return RET_FAILURE;
 	queue_dequeue(thread_queue, (void**)&curr_thread);
 	curr_thread->state = T_RUNNING;
 	/* Build the initial thread */
-	if(uthread_create(func, arg) < 0)
+	if (uthread_create(func, arg) < 0)
 		return RET_FAILURE;
         /* Begin the idle loop */
 	//int i = 0;
 	preempt_start(preempt);
-	while(queue_length(thread_queue)) {
+	while (queue_length(thread_queue)) {
 		//fprintf(stderr, "[idle] Entering cycle %d\n", i);
 		queue_iterate(thread_queue, delete_zombies);
 		uthread_yield();

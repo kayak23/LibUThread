@@ -60,7 +60,9 @@ int sem_destroy(sem_t sem)
 }
 
 int sem_down(sem_t sem)
-{	
+{
+	// we should probably make this a critical section.
+	
 	/*
  	 * spinlock_lock(sem->lock);
      * while (sem->count == 0) {
@@ -72,9 +74,8 @@ int sem_down(sem_t sem)
 	//fprintf(stderr, "[sem_down] Down procedure invoked.\n");
 	if (sem == NULL)
 		return RET_FAILURE;
-
 	/* If sem count is zero, we block ourselves */
-	if (sem->count == 0) {
+	while (sem->count == 0) {
 		//fprintf(stderr, "[sem_down] out of resources; blocking thread\n");
 		uthread_t self = uthread_current();
 		queue_enqueue(sem->q_blocked, self);
@@ -88,6 +89,8 @@ int sem_down(sem_t sem)
 
 int sem_up(sem_t sem)
 {
+	// we should probably make this a critical section
+
 	/*
 	 * spinlock_lock(sem->lock);
      * sem->count += 1;

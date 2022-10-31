@@ -29,47 +29,58 @@
 #define HZ 100
 
 static struct itimerval *timer;
+static struct sigaction *sa;
+static struct sigaction *oa;
 static sigset_t *blocker;
 static bool enabled;
 
 void alarm_yield(int signum)
 {
 	(void)signum;
-	if(enabled)
+	if (enabled)
 		uthread_yield();
 }
 
 void preempt_disable(void)
 {
 	/* TODO Phase 4 */
-	if(enabled)
+	if (enabled) {
 		pthread_sigmask(SIG_BLOCK, blocker, NULL);
+		//fprintf(stderr, "[PRE] Preemption disabled.\n");
+	}
 }
 
 void preempt_enable(void)
 {
 	/* TODO Phase 4 */
-	if(enabled)
+	if (enabled) {
 		pthread_sigmask(SIG_UNBLOCK, blocker, NULL);
+		//fprintf(stderr, "[PRE] Premption enabled.\n");
+	}
 }
 
 void preempt_start(bool preempt)
 {
-	if(preempt) {
-		/* we want a virtual timer */
+	enabled = preempt;
+	if (enabled) {
+		/* timer, sigaction, blocker init */
 		timer = malloc(sizeof(struct itimerval));
-		enabled = true;
-		if(signal(SIGALRM, alarm_yield) == SIG_ERR)
-			fprintf(stderr, "Signal Error\n");
-		/* setup the blocker */
-		sigemptyset(blocker);
-		sigaddset(blocker, SIGALRM);
-		/* setup the timer */
+		sa = malloc(sizeof(struct sigaction));
+		oa = malloc(sizeof(struct sigaction));
+		blocker = malloc(sizeof(sigset_t));
+
 		timer->it_interval.tv_sec = 0;
 		timer->it_interval.tv_usec = 100*HZ;
-		timer->it_value.tv_usec = 100*HZ;
 		timer->it_value.tv_sec = 0;
-		if(setitimer(ITIMER_REAL, timer, NULL) == RET_FAILURE)
+		timer->it_value.tv_usec = 100*HZ;
+		sigemptyset(blocker);
+		sigaddset(blocker, SIGVTALRM);
+		sa->sa_handler = alarm_yield;
+		sa->sa_mask = *blocker;
+
+		if (sigaction(SIGVTALRM, sa, oa) == RET_FAILURE)
+			fprintf(stderr, "Signal Error\n");
+		if (setitimer(ITIMER_VIRTUAL, timer, NULL) == RET_FAILURE)
 			fprintf(stderr, "Timer Error\n");
 	}
 }
@@ -77,11 +88,14 @@ void preempt_start(bool preempt)
 void preempt_stop(void)
 {
 	/* TODO Phase 4 */
-	if(enabled) {
+	if (enabled) {
 		timer->it_value.tv_usec = 0; //disables the timer
 		free(timer);
-		if(signal(SIGVTALRM, SIG_DFL) == SIG_ERR)
+		free(sa);
+		free(blocker);
+		if (sigaction(SIGVTALRM, oa, NULL) == RET_FAILURE)
 			fprintf(stderr, "DFL Signal Error\n");
+		free(oa);
 	}
 }
 
