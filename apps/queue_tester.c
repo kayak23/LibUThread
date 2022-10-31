@@ -28,11 +28,11 @@ static void q_increment(queue_t q, void *data)
 	*(int*)data += 10;
 }
 
-/* print queue */
+/* print queue 
 static void q_print(queue_t queue, void *data)
 {
 	printf("%s\n", (char*)data);
-}
+} */
 
 /* Create */
 void test_create(void)
@@ -165,11 +165,13 @@ void test_queue_iterate_increment(void)
 	queue_enqueue(q, (void*)i);
 	queue_enqueue(q, (void*)(i+1));
 	queue_enqueue(q, (void*)(i+2));
-	queue_enqueue(q, (void*)(i+3));
-	queue_enqueue(q, (void*)(i+4));
+	//queue_enqueue(q, (void*)(i+3));
+	//queue_enqueue(q, (void*)(i+4));
 
 	queue_iterate(q, q_increment);
-	queue_iterate(q, q_print);
+	//queue_iterate(q, q_print);
+
+	TEST_ASSERT(i[0] == 10 && i[1] == 11 && i[2] == 12);
 }
 
 /* queue delete */
@@ -208,7 +210,15 @@ int main(void)
 {
 	test_create();
 	test_queue_simple();
-
+	test_dequeue_empty();
+	test_enqueue_null();
+	test_enqueue_to_null();
+	test_dequeue_null();
+	test_enqueue_dequeue_50();
+	test_queue_length();
+	test_queue_iterate_increment();
+	test_queue_delete();
+	test_delete_nonexistent();
 
 	return 0;
 }

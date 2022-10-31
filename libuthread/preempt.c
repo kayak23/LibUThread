@@ -61,7 +61,7 @@ void preempt_enable(void)
 
 void preempt_start(bool preempt)
 {
-	enabled = preempt;
+	enabled = preempt; //TODO: implement saving the old timer
 	if (enabled) {
 		/* timer, sigaction, blocker init */
 		timer = malloc(sizeof(struct itimerval));

@@ -62,6 +62,7 @@ int sem_destroy(sem_t sem)
 int sem_down(sem_t sem)
 {
 	// we should probably make this a critical section.
+	// TODO: implement spinlocks
 	
 	/*
  	 * spinlock_lock(sem->lock);
@@ -89,7 +90,8 @@ int sem_down(sem_t sem)
 
 int sem_up(sem_t sem)
 {
-	// we should probably make this a critical section
+	// we should probably make this a critical sectioni
+	// TODO: implement spinlocks
 
 	/*
 	 * spinlock_lock(sem->lock);
