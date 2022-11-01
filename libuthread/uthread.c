@@ -133,9 +133,6 @@ static void delete_zombies(queue_t queue, void *data)
 
 int uthread_run(bool preempt, uthread_func_t func, void *arg)
 {
-	/*  Phase 2 */
-	if (preempt || !preempt)
-		fprintf(stderr, "Hello!\n");
 	/* build the thread queue */
 	if ((thread_queue = queue_create()) == NULL) 
 		return RET_FAILURE;

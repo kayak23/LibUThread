@@ -13,15 +13,15 @@
 #define RET_FAILURE -1
 #endif
 
-#define TEST_ASSERT(assert)				\
-do {									\
+#define TEST_ASSERT(assert)\
+do {\
 	int k;\
 	for(k = 0; k < LONGEST-format; k++) fprintf(stdout, " ");\
-	if (assert) {						\
-		printf(" ... \033[0;32m[PASS]\033[0m\n");				\
-	} else	{							\
-		printf(" ... \033[0;31m[FAIL]\033[0m\n");				\
-	}									\
+	if (assert) {\
+		printf(" ... \033[0;32m[PASS]\033[0m\n");\
+	} else	{\
+		printf(" ... \033[0;31m[FAIL]\033[0m\n");\
+	}\
 } while(0)
 
 static int format;
