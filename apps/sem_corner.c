@@ -25,19 +25,19 @@ do {\
 } while(0)
 
 static sem_t sem;
-static char *pattern;
-static char *result;
+static int format;
 
-pattern = "[B][C][C][A]";
+char result[32];
+char pattern[13] = "[B][C][C][A]";
 
 static void threadC(void *data)
 {
 	(void)data;
 	sem_down(sem);
-	*result += "[C]";
+	strncat(result, "[C]", 3);
 	fprintf(stdout, "[C]\n");
 	uthread_yield();
-	*result += "[C]";
+	strncat(result,  "[C]", 3);
 	fprintf(stdout, "[C]\n");
 	sem_up(sem);
 }
@@ -46,7 +46,7 @@ static void threadB(void *data)
 {
 	(void)data;
 	sem_up(sem);
-	*result += "[B]";
+	strncat(result, "[B]", 3);
 	fprintf(stdout, "[B]\n");
 }
 
@@ -54,7 +54,7 @@ static void threadA(void *data)
 {
 	(void)data;
 	sem_down(sem);
-	*result += "[A]";
+	strncat(result, "[A]", 3);
 	fprintf(stdout, "[A]\n");
 }
 
@@ -65,7 +65,7 @@ void thread1(void *data)
 	uthread_create(threadB, NULL);
 	uthread_create(threadC, NULL);
 
-	TEST_ASSERT(strcmp(patter, result));
+	TEST_ASSERT(strcmp(pattern, result));
 	printf("END\n\n");
 }
 
