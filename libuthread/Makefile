@@ -12,11 +12,9 @@ deps := $(patsubst %.o,%.d,$(objs))
 -include $(deps)
 
 $(lib): $(objs)
-	@echo "create library"
 	@ar rcs $(lib) $(objs)
 
 %.o: %.c 
-	@echo "CC	$@"
 	@$(CC) $(CFLAGS) -c -o $@ $<	
 
 clean: 
