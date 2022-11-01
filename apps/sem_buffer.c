@@ -10,8 +10,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <sem.h>
-#include <uthread.h>
+#include "sem.h"
+#include "uthread.h"
 
 #define BUFFER_SIZE	16
 #define MAXCOUNT	1000
