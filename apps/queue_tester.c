@@ -29,6 +29,7 @@ static int format;
 /* Increment */
 static void q_increment(queue_t q, void *data)
 {
+	(void)q;
 	*(int*)data += 10;
 }
 
@@ -147,7 +148,7 @@ void test_delete_iterate_length(void)
 	int j;
 	int i[3] = {0, 1, 2};
 	queue_t q = queue_create();
-	for(j = 0; j < sizeof(i)/sizeof(int); j++) queue_enqueue(q, i+j);
+	for(j = 0; j < 3; j++) queue_enqueue(q, i+j);
 	fprintf(stdout, "*** TEST length ***%n", &format);
 	TEST_ASSERT(queue_length(q) == 3);
 	fprintf(stdout, "*** TEST delete ***%n", &format);

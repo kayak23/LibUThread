@@ -20,5 +20,5 @@ $(lib): $(objs)
 	@$(CC) $(CFLAGS) -c -o $@ $<	
 
 clean: 
-		@echo "CLEAN"
-		@rm -f $(lib) $(objs) $(deps)
+	@echo "CLEAN"
+	@rm -f $(lib) $(objs) $(deps)
