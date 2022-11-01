@@ -121,12 +121,10 @@ static void delete_zombies(queue_t queue, void *data)
 	if (thread->state == T_EXITED)
 	{
 		//fprintf(stderr, "[DZ] Found a zombie!\n");
-		preempt_disable();
 		queue_delete(queue, thread);
 		free(thread->context);
 		uthread_ctx_destroy_stack(thread->stack);
 		free(thread);
-		preempt_enable();
 		//fprintf(stderr, "[DZ] Beheaded a zombie.\n");
 	}
 	//fprintf(stderr, "[DZ] Finished deleting zombies\n");
@@ -154,7 +152,9 @@ int uthread_run(bool preempt, uthread_func_t func, void *arg)
 	preempt_start(preempt);
 	while (queue_length(thread_queue)) {
 		//fprintf(stderr, "[idle] Entering cycle %d\n", i);
+		preempt_disable();
 		queue_iterate(thread_queue, delete_zombies);
+		preempt_enable();
 		uthread_yield();
 		//fprintf(stderr, "[idle] Exiting cycle %d\n", i++);
 	}

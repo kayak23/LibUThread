@@ -4,14 +4,6 @@
 #include "private.h"
 
 static int num_interrupts;
-/*
-static void printer(void *arg)
-{
-	(void)arg;
-	fprintf(stderr, "\nPrinter Thread\n");
-	uthread_yield();
-	fprintf(stderr, "\nBye...\n");
-}*/
 
 static void increment(void *arg)
 {
@@ -20,8 +12,6 @@ static void increment(void *arg)
 	num_interrupts++;
 	if(num_interrupts < 1000) {
 		uthread_create(increment, NULL);
-		/*if(num_interrupts % 100 == 0)
-			uthread_create(printer, NULL);*/
 	}
 }
 

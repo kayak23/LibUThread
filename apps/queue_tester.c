@@ -5,6 +5,8 @@
 
 #include "queue.h"
 
+#define LONGEST 36
+
 #ifndef RETVALS
 #define RETVALS
 #define RET_SUCCESS 0
@@ -13,14 +15,17 @@
 
 #define TEST_ASSERT(assert)				\
 do {									\
-	printf("ASSERT: " #assert " ... ");	\
+	int k;\
+	for(k = 0; k < LONGEST-format; k++) fprintf(stdout, " ");\
 	if (assert) {						\
-		printf("PASS\n");				\
+		printf("\033[0;32m[PASS]\033[0m\n");				\
 	} else	{							\
-		printf("FAIL\n");				\
+		printf("\033[0;31m[FAIL]\033[0m\n");				\
 		exit(1);						\
 	}									\
 } while(0)
+
+static int format;
 
 /* Increment */
 static void q_increment(queue_t q, void *data)
@@ -28,18 +33,127 @@ static void q_increment(queue_t q, void *data)
 	*(int*)data += 10;
 }
 
-/* print queue 
-static void q_print(queue_t queue, void *data)
+static void q_del(queue_t q, void *data)
 {
-	printf("%s\n", (char*)data);
-} */
+	queue_delete(q, data);
+}
 
-/* Create */
+/* Ensure create successfully allocates memeory for queue */
 void test_create(void)
 {
-	fprintf(stderr, "*** TEST create ***\n");
-
+	fprintf(stdout, "*** TEST create *** ... %n", &format);	
 	TEST_ASSERT(queue_create() != NULL);
+}
+
+/* Ensure destroy returns failure when appropriate */
+void test_destroy_error(void)
+{
+	int item = 0;
+	int *dest;
+	queue_t q = queue_create();
+	queue_enqueue(q, &item);
+	fprintf(stdout, "*** TEST destroy nonempty *** ... %n", &format);
+	TEST_ASSERT(queue_destroy(q) == RET_FAILURE);
+	fprintf(stdout, "*** TEST destroy null *** ... %n", &format);
+	TEST_ASSERT(queue_destroy(NULL) == RET_FAILURE);
+	queue_dequeue(q, (void**)&dest);
+	queue_destroy(q);
+}
+
+/* Ensure enqueue returns failure when appropriate */
+void test_enqueue_error(void)
+{
+	int item = 0;
+	queue_t q = queue_create();
+	fprintf(stdout, "*** TEST enqueue q_null *** ... %n", &format);
+	TEST_ASSERT(queue_enqueue(NULL, &item) == RET_FAILURE);
+	fprintf(stdout, "*** TEST enqueue d_null *** ... %n", &format);
+	TEST_ASSERT(queue_enqueue(q, NULL) == RET_FAILURE);
+	queue_destroy(q);
+}
+
+/* Ensure dequeue returns failure when appropriate */
+void test_dequeue_error(void)
+{
+	int item = 0;
+	int *dest;
+	queue_t q = queue_create();
+	queue_enqueue(q, &item);
+	fprintf(stdout, "*** TEST dequeue q_null *** ... %n", &format);
+	TEST_ASSERT(queue_dequeue(NULL, (void**)&dest) == RET_FAILURE);
+	fprintf(stdout, "*** TEST dequeue d_null *** ... %n", &format);
+	TEST_ASSERT(queue_dequeue(q, NULL) == RET_FAILURE);
+	fprintf(stdout, "*** TEST dequeue empty *** ... %n", &format);
+	queue_dequeue(q, (void**)&dest);
+	TEST_ASSERT(queue_dequeue(q, (void**)&dest) == RET_FAILURE);
+	queue_destroy(q);
+}
+
+/* Ensure delete returns failure when appropriate */
+void test_delete_error(void)
+{
+	int i[2] = {0, 1};
+	queue_t q = queue_create();
+	queue_enqueue(q, i);
+	queue_enqueue(q, i+1);
+	fprintf(stdout, "*** TEST delete q_null *** ... %n", &format);
+	TEST_ASSERT(queue_delete(NULL, i) == RET_FAILURE);
+	fprintf(stdout, "*** TEST delete d_null *** ... %n", &format);
+	TEST_ASSERT(queue_delete(q, NULL) == RET_FAILURE);
+	fprintf(stdout, "*** TEST delete no_such *** ... %n", &format);
+	queue_delete(q, i);
+	TEST_ASSERT(queue_delete(q, i) == RET_FAILURE);
+	queue_delete(q, i+1);
+	queue_destroy(q);
+}
+
+/* Ensure iterate returns failure when appropriate */
+void test_iterate_error(void)
+{
+	int i[2] = {0, 1};
+	queue_t q = queue_create();
+	queue_enqueue(q, i);
+	queue_enqueue(q, i+1);
+	fprintf(stdout, "*** TEST iterate q_null *** ... %n", &format);
+	TEST_ASSERT(queue_iterate(NULL, q_increment) == RET_FAILURE);
+	fprintf(stdout, "*** TEST iterate f_null *** ... %n", &format);
+	TEST_ASSERT(queue_iterate(q, NULL) == RET_FAILURE);
+	queue_iterate(q, q_del);
+	queue_destroy(q);
+}
+
+void test_destroy(void)
+{
+	queue_t q = queue_create();
+	fprintf(stdout, "*** TEST destroy *** ... %n", &format);
+	TEST_ASSERT(queue_destroy(q) == RET_SUCCESS);
+}
+
+void test_enqueue_dequeue(void)
+{
+	int item = 1;
+	int *dest;
+	queue_t q = queue_create();
+	fprintf(stdout, "*** TEST enqueue *** ... %n", &format);
+	TEST_ASSERT(queue_enqueue(q, &item) == RET_SUCCESS);
+	fprintf(stdout, "*** TEST dequeue *** ... %n", &format);
+	TEST_ASSERT(queue_dequeue(q, (void**)&dest) == RET_SUCCESS && *dest == 1);
+	queue_destroy(q);
+}
+
+void test_delete_iterate_length(void)
+{
+	int j;
+	int i[3] = {0, 1, 2};
+	queue_t q = queue_create();
+	for(j = 0; j < sizeof(i)/sizeof(int); j++) queue_enqueue(q, i+j);
+	fprintf(stdout, "*** TEST length *** ... %n", &format);
+	TEST_ASSERT(queue_length(q) == 3);
+	fprintf(stdout, "*** TEST delete *** ... %n", &format);
+	TEST_ASSERT(queue_delete(q, i+1) == RET_SUCCESS && queue_length(q) == 2);
+	fprintf(stdout, "*** TEST iterate *** ... %n", &format);
+	TEST_ASSERT(queue_iterate(q, q_del) == RET_SUCCESS && queue_length == 0);
+	queue_destroy(q);
 }
 
 /* Enqueue/Dequeue simple */
@@ -67,42 +181,6 @@ void test_dequeue_empty(void)
 
 	q = queue_create();
 	retval = queue_dequeue(q, (void**)&ptr);
-	TEST_ASSERT(retval == RET_FAILURE);
-}
-
-/* Enqueue NULL */
-void test_enqueue_null(void)
-{
-	int retval;
-	queue_t q = queue_create();
-	
-	fprintf(stderr, "*** TEST enqueue_null ***\n");
-
-	retval = queue_enqueue(q, NULL);
-	TEST_ASSERT(retval == RET_FAILURE);
-}
-
-/* Enqueue to NULL */
-void test_enqueue_to_null(void)
-{
-	int data = 42;
-	int retval;
-	
-	fprintf(stderr, "*** TEST enqueue_to_null ***\n");
-
-	retval = queue_enqueue(NULL, &data);
-	TEST_ASSERT(retval == RET_FAILURE);
-}
-
-/* Dequeue from NULL */
-void test_dequeue_null(void)
-{
-	int *ptr;
-	int retval;
-
-	fprintf(stderr, "*** TEST dequeue_null ***\n");
-
-	retval = queue_dequeue(NULL, (void**)&ptr);
 	TEST_ASSERT(retval == RET_FAILURE);
 }
 
@@ -190,35 +268,27 @@ void test_queue_delete(void)
 	TEST_ASSERT(queue_length(q) == 2 && retval == RET_SUCCESS);
 }
 
-/* Delete nonexistent */
-void test_delete_nonexistent(void)
-{
-	queue_t q;
-
-	fprintf(stderr, "*** TEST delete_nonexistent ***\n");
-
-	q = queue_create();
-	queue_enqueue(q, "A");
-	queue_enqueue(q, "B");
-	queue_enqueue(q, "C");
-
-	int retval  = queue_delete(q, "D");
-	TEST_ASSERT(queue_length(q) == 3 && retval == RET_FAILURE);
-}
-
 int main(void)
 {
+	/* Error catching */
 	test_create();
+	test_destroy_error();
+	test_enqueue_error();
+	test_dequeue_error();
+	test_delete_error();
+	test_iterate_error();
+	
+	/* Functionality */
+	test_destroy();
+	test_enqueue_dequeue();
+	test_delete_iterate_length();
+
+	/* Additional tests */
 	test_queue_simple();
-	test_dequeue_empty();
-	test_enqueue_null();
-	test_enqueue_to_null();
-	test_dequeue_null();
 	test_enqueue_dequeue_50();
 	test_queue_length();
 	test_queue_iterate_increment();
 	test_queue_delete();
-	test_delete_nonexistent();
 
-	return 0;
+	return EXIT_SUCCESS;
 }

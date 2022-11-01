@@ -160,39 +160,4 @@ static void q_print(queue_t queue, void *data)
 static void q_delete(queue_t queue, void *data)
 {
 	queue_delete(queue, data);
-}
-
-
-int main() {
-        queue_t queue;
-        queue = queue_create();
-        char *a  = "aa";
-        char *b =  "BB";
-
-        queue_enqueue(queue, a);
-        queue_enqueue(queue, b);
-
-        printf("queue head %s\n", (char*) queue->head->data);
-        printf("queue tail %s\n", (char*) queue->tail->data);
-
-	queue_delete(queue, "aa");
-
-        printf("queue head %s\n", (char*) queue->head->data);
-        printf("queue tail %s\n", (char*) queue->tail->data);
-	queue_enqueue(queue, a);
-	queue_enqueue(queue, a);
-	queue_iterate(queue, q_print);
-	queue_iterate(queue, q_delete);
-	queue_iterate(queue, q_print);
-	queue_enqueue(queue, "HelloWorld");
-	printf("enqueued\n");
-	void **collector = (void**)&a;
-	void **trash = NULL;
-	int retval = queue_dequeue(queue, trash);
-	printf("dequeued\n");
-	if(retval == -1)
-		printf("dequeue failed\n");
-	printf("Collected value: %s\n", *(char**)collector);
-	printf("Done!\n");
-        return 0;
 }*/

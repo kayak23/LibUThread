@@ -29,6 +29,7 @@
 #define HZ 100
 
 static struct itimerval *timer;
+static struct itimerval *oldt;
 static struct sigaction *sa;
 static struct sigaction *oa;
 static sigset_t *blocker;
@@ -43,7 +44,6 @@ void alarm_yield(int signum)
 
 void preempt_disable(void)
 {
-	/* TODO Phase 4 */
 	if (enabled) {
 		pthread_sigmask(SIG_BLOCK, blocker, NULL);
 		//fprintf(stderr, "[PRE] Preemption disabled.\n");
@@ -52,23 +52,23 @@ void preempt_disable(void)
 
 void preempt_enable(void)
 {
-	/* TODO Phase 4 */
 	if (enabled) {
 		pthread_sigmask(SIG_UNBLOCK, blocker, NULL);
-		//fprintf(stderr, "[PRE] Premption enabled.\n");
+		//fprintf(stderr, "[PRE] Preemption enabled.\n");
 	}
 }
 
 void preempt_start(bool preempt)
 {
-	enabled = preempt; //TODO: implement saving the old timer
+	enabled = preempt;
 	if (enabled) {
 		/* timer, sigaction, blocker init */
 		timer = malloc(sizeof(struct itimerval));
+		oldt = malloc(sizeof(struct itimerval));
 		sa = malloc(sizeof(struct sigaction));
 		oa = malloc(sizeof(struct sigaction));
 		blocker = malloc(sizeof(sigset_t));
-
+		
 		timer->it_interval.tv_sec = 0;
 		timer->it_interval.tv_usec = 100*HZ;
 		timer->it_value.tv_sec = 0;
@@ -80,6 +80,8 @@ void preempt_start(bool preempt)
 
 		if (sigaction(SIGVTALRM, sa, oa) == RET_FAILURE)
 			fprintf(stderr, "Signal Error\n");
+		if (getitimer(ITIMER_VIRTUAL, oldt) == RET_FAILURE)
+			fprintf(stderr, "OLD Timer Error\n");
 		if (setitimer(ITIMER_VIRTUAL, timer, NULL) == RET_FAILURE)
 			fprintf(stderr, "Timer Error\n");
 	}
@@ -87,15 +89,17 @@ void preempt_start(bool preempt)
 
 void preempt_stop(void)
 {
-	/* TODO Phase 4 */
 	if (enabled) {
 		timer->it_value.tv_usec = 0; //disables the timer
-		free(timer);
-		free(sa);
-		free(blocker);
 		if (sigaction(SIGVTALRM, oa, NULL) == RET_FAILURE)
 			fprintf(stderr, "DFL Signal Error\n");
+		if (setitimer(ITIMER_VIRTUAL, oldt, NULL) == RET_FAILURE)
+			fprintf(stderr, "DFL Timer Error\n");
+
+		free(blocker);
+		free(timer);
+		free(oldt);
+		free(sa);
 		free(oa);
 	}
 }
-
