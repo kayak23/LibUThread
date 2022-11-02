@@ -1,39 +1,34 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "uthread.h"
-#include "private.h"
 
 static int num_interrupts;
 
 static void increment(void *arg)
 {
 	(void)arg;
-	//preempt_disable();
 	num_interrupts++;
-	if(num_interrupts < 1000) {
+	if(num_interrupts < 1000)
 		uthread_create(increment, NULL);
-	}
 }
 
 static void greedy(void *arg)
 {
 	(void)arg;
+	int chars, i;
 	uthread_create(increment, NULL);
-
-	int chars;
-	char *str = "I have been interrupted ";
-	fprintf(stderr, "%s", str);
+	fprintf(stdout, "I have been interrupted ");
 	while(num_interrupts < 1000)
 	{
-		fprintf(stderr, "%d times.%n", num_interrupts, &chars);
-		int i;
-		for(i = 0; i < chars; i++) fprintf(stderr, "\b");
+		fprintf(stdout, "%d times.%n", num_interrupts, &chars);
+		for(i = 0; i < chars; i++) fprintf(stdout, "\b");
 	}
-	fprintf(stderr, "\n");
+	fprintf(stdout, "\n");
 }
 
 int main(void)
 {
 	uthread_run(true, greedy, NULL);
-	return 0;
+	return EXIT_SUCCESS;
 }
