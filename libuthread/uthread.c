@@ -34,9 +34,8 @@
 
 /* Changed from stack_t to void */
 struct uthread_tcb {
-	/* TODO Phase 2 */
 	uthread_ctx_t *context;
-	void *stack; //where is this defined? is it from signal.h? uthread_ctx_t has a stack member
+	void *stack;
 	int state;
 };
 
@@ -45,33 +44,18 @@ static struct uthread_tcb *curr_thread;
 
 struct uthread_tcb *uthread_current(void)
 {
-	/* TODO Phase 2/4 */
 	return curr_thread;
 }
 
-/* When implementing preemption we will need to ensure that we do not
- * context switch back to zombies; maybe a zombie semaphore in 
- * destroy zombies?
- *
- * */
 void uthread_yield(void)
 {
 	preempt_disable();
-	/* TODO Phase 2 USE LOCKS HERE IN FUTURE (PROBABLY) */
 	//fprintf(stderr, "[yield] Beginning yield procedure\n");
 	struct uthread_tcb *tail = curr_thread;
-	//struct uthread_tcb new;
-	//if (curr_thread->state != T_EXITED && curr_thread->state != T_BLOCKED)
 	if (curr_thread->state == T_RUNNING)
 		curr_thread->state = T_READY;
 	//fprintf(stderr, "[yield] State codes set\n");
-	do {/*
-		if (curr_thread->state == T_EXITED) {
-			struct uthread_tcb *thread = curr_thread;
-			free(thread->context);
-			uthread_ctx_destroy_stack(thread->stack);
-			free(thread);
-		}*/
+	do {
 		queue_enqueue(thread_queue, curr_thread);
 		//fprintf(stderr, "[yield] Thread enqueued\n");
 		queue_dequeue(thread_queue, (void**)&curr_thread);
@@ -81,7 +65,6 @@ void uthread_yield(void)
 	//	fprintf(stderr, "[yield] Error! curr_thread is null!\n");
 	//fprintf(stderr, "[yield] Switching context\n");
 	curr_thread->state = T_RUNNING;
-	//new = *curr_thread;
 	preempt_enable(); //always the possibility that there a SIGVTALRM is received here *skull emoji*
 	uthread_ctx_switch(tail->context, curr_thread->context);
 	//fprintf(stderr, "[yield] Yield procedure completed\n");
@@ -89,7 +72,6 @@ void uthread_yield(void)
 
 void uthread_exit(void)
 {
-	/* TODO Phase 2 USE LOCKS HERE IN FUTURE (PROBABLY) */
 	//fprintf(stderr, "[exit] A thread was terminated\n");
         curr_thread->state = T_EXITED;
         uthread_yield();
@@ -108,7 +90,9 @@ int uthread_create(uthread_func_t func, void *arg)
         if (uthread_ctx_init(new_thread->context, new_thread->stack, func, arg) < 0)
                 return RET_FAILURE;
         new_thread->state = T_READY;
+	preempt_disable();
         queue_enqueue(thread_queue, new_thread);
+	preempt_enable();
 	//fprintf(stderr, "[ucreate] Created a thread\n");
         return RET_SUCCESS;
 }
@@ -155,8 +139,8 @@ int uthread_run(bool preempt, uthread_func_t func, void *arg)
 		uthread_yield();
 		//fprintf(stderr, "[idle] Exiting cycle %d\n", i++);
 	}
-	preempt_stop();
 	/* cleanup */
+	preempt_stop();
         uthread_ctx_destroy_stack(curr_thread->stack);
 	queue_destroy(thread_queue);
 	free(curr_thread->context);
@@ -165,18 +149,13 @@ int uthread_run(bool preempt, uthread_func_t func, void *arg)
         return RET_SUCCESS;
 }
 
-/* for both of these guys, use locks in the future */
-
 void uthread_block(void)
 {
-	/* TODO Phase 4 */
 	curr_thread->state = T_BLOCKED;
 	uthread_yield();
 }
 
 void uthread_unblock(struct uthread_tcb *uthread)
 {
-	/* TODO Phase 4 */
 	uthread->state = T_READY;
-	//uthread_yield(); //I think this was a mistake...I'll explain why later.
 }

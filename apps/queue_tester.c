@@ -190,6 +190,7 @@ void test_enqueue_dequeue_50(void)
 		pass = (queue_dequeue(q, (void**)&ptr) == RET_SUCCESS && *ptr == j[i]);
 	}
 	TEST_ASSERT(pass && queue_length(q) == 0);
+	queue_destroy(q);
 }
 
 /* Queue iterate increment */
