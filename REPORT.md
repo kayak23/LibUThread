@@ -1,6 +1,4 @@
 # USER-LEVEL THREAD LIBRARY
-Authors: , Rafael Millan
-
 ## Abstract
 Our User-Level Thread Libray provides a complete interface for
 applications to create and run independent threads concurrently at user-level
