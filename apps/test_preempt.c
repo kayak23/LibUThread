@@ -12,13 +12,17 @@ static int countB = 0;
 static void loopA(void *data)
 {
 	(void)data;
+	preempt_disable();
 	while(countA + countB < SUM) fprintf(stdout, "countA: %d\n", countA++);
+	preempt_enable();
 }
 
 static void loopB(void *data)
 {
 	(void)data;
+	preempt_disable();
 	while(countA + countB < SUM) fprintf(stdout, "countB: %d\n", countB++);
+	preempt_enable();
 }
 
 static void driver(void* data)

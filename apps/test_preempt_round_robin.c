@@ -3,6 +3,7 @@
 #include <sys/time.h>
 
 #include "uthread.h"
+#include "preempt.c"
 
 #define SUM 1000000
 
@@ -13,19 +14,25 @@ static int countC = 0;
 static void loopA(void *data)
 {
 	(void)data;
+	preempt_disabe();
 	while(countA + countB + countC < SUM) fprintf(stdout, "loop A %d\n", countA++);
+	preempt_enable();
 }
 
 static void loopB(void *data)
 {
 	(void)data;
+	preempt_disable();
 	while(countA + countB + countC < SUM) fprintf(stdout, "loop B %d\n", countB++);
+	preempt_enable();
 }
 
 static void loopC(void *data)
 {
   	(void)data;
+	preempt_disable();
   	while(countA + countB + countC < SUM) fprintf(stdout, "loop C %d\n", countC++);
+	preempt_enable();
 }
 
 static void driver(void* data)
