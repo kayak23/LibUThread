@@ -1,5 +1,5 @@
 # USER-LEVEL THREAD LIBRARY
-## Abstract
+## Summary
 Our User-Level Thread Libray provides a complete interface for
 applications to create and run independent threads concurrently at user-level
 
@@ -22,6 +22,13 @@ that does not exists or using invalid or `NULL` data will report a failure.
 Additionally an error occurs when calling `queue_destroy()` on a non-empty
 queue and `queue_iterate()` reports an error if it receives a non-existent
 queue or a `NULL` function.
+
+### queue_tester.c
+Our queue tester implements 11 test cases across 3 distict categories
+which allow us to verify the proper behavior of our queue library.
+- Error Catching
+- Functionality
+- Miscellaneous
 
 ## uthread API
 
@@ -48,6 +55,8 @@ of 0, and gets blocked. TB calls `sem_up()` on the same semaphore, and awakens
 TA. However, before TA can run again, TC calls `sem_down()` on the semaphore
 and 'snatches' the newly available resource. TA is not reawakened until TC
 releases the resource with `sem_up()`. This can lead to TA being starved if the
-semaphore resource is always getting 'snaTched' before A can execute. 
+semaphore resource is always getting 'snaTched' before A can execute.
+
+### sem_corner.c
 
 ## preemption
