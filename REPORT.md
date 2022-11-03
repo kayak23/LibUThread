@@ -17,8 +17,13 @@ structure as a linked list of `q_node` data structures with a void pointer
 containing the node data. Additionally, each node contains pointer to its next
 and previous element in the queue. In this case, each node prepresents a thread
 in our program. Our `queue` struct keeps track of the head and tail pointers of
-the queue. This allows us to implement the `enqueue` and `dequeue` operations
-in O(1). 
+the queue, allowinf us to implement the `enqueue` and `dequeue` operations
+in O(1). Error handling ensures that valid arguments are passed into the queue
+library funrctions. Enqueuing or dequeueing as well as deleting into a queue
+that does not exists or using invalid or `NULL` data will report a failure.
+Additionally an error occurs when calling `queue_destroy()` on a non-empty
+queue and `queue_iterate()` reports an error if it receives a non-existent
+queue or a `NULL` function.
 
 ## uthread API
 
