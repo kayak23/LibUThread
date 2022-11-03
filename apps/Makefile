@@ -10,6 +10,7 @@ programs := \
 	sem_prime.x \
 	sem_corner.x \
 	test_preempt.x \
+	test_preempt_round_robin.x\
 
 # User-level thread library
 UTHREADLIB := libuthread
