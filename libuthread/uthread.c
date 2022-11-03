@@ -65,7 +65,8 @@ void uthread_yield(void)
 		queue_dequeue(thread_queue, (void**)&curr_thread);
 	} while (curr_thread->state != T_READY);
 	curr_thread->state = T_RUNNING;
-	/* Reenable interrupts.
+	/* 
+	 * Reenable interrupts.
 	 * Always the possibility that there a SIGVTALRM 
 	 * is received here *skull emoji*
 	 */
@@ -115,14 +116,16 @@ static void delete_zombies(queue_t queue, void *data)
 
 int uthread_run(bool preempt, uthread_func_t func, void *arg)
 {
-	/* build the thread queue */
+	/* Build the thread queue */
 	if ((thread_queue = queue_create()) == NULL) 
 		return RET_FAILURE;
+
 	/* Build the idle thread */
 	if (uthread_create(NULL, NULL) < 0)
 		return RET_FAILURE;
 	queue_dequeue(thread_queue, (void**)&curr_thread);
 	curr_thread->state = T_RUNNING;
+
 	/* Build the initial thread */
 	if (uthread_create(func, arg) < 0)
 		return RET_FAILURE;
@@ -130,6 +133,7 @@ int uthread_run(bool preempt, uthread_func_t func, void *arg)
         /* Begin the idle loop */
 	preempt_start(preempt);
 	while (queue_length(thread_queue)) {
+		/* Enable/Disable interrupts for critical sections */
 		preempt_disable();
 		queue_iterate(thread_queue, delete_zombies);
 		preempt_enable();

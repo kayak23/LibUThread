@@ -6,7 +6,7 @@ Our User-Level Thread Libray provides a complete interface for
 applications to create and run independent threads concurrently at user-level
 
 Our Library allows the user to:
--  Create new threads.
+- Create new threads.
 - User Round-Robin to schedule threads with a 100Hz timer.
 	- Preemtion is used to provide an interrupt based scheduler.
 - Syncronize resource usage among threads with semaphores.

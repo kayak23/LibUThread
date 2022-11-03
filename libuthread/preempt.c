@@ -46,7 +46,6 @@ void preempt_disable(void)
 {
 	if (enabled) {
 		pthread_sigmask(SIG_BLOCK, blocker, NULL);
-		//fprintf(stderr, "[PRE] Preemption disabled.\n");
 	}
 }
 
@@ -54,7 +53,6 @@ void preempt_enable(void)
 {
 	if (enabled) {
 		pthread_sigmask(SIG_UNBLOCK, blocker, NULL);
-		//fprintf(stderr, "[PRE] Preemption enabled.\n");
 	}
 }
 
@@ -62,7 +60,7 @@ void preempt_start(bool preempt)
 {
 	enabled = preempt;
 	if (enabled) {
-		/* timer, sigaction, blocker init */
+		/* Timer, sigaction, blocker init */
 		timer = malloc(sizeof(struct itimerval));
 		oldt = malloc(sizeof(struct itimerval));
 		sa = malloc(sizeof(struct sigaction));
@@ -90,7 +88,8 @@ void preempt_start(bool preempt)
 void preempt_stop(void)
 {
 	if (enabled) {
-		timer->it_value.tv_usec = 0; //disables the timer
+		/* Disable the timer */
+		timer->it_value.tv_usec = 0; 
 		if (sigaction(SIGVTALRM, oa, NULL) == RET_FAILURE)
 			fprintf(stderr, "DFL Signal Error\n");
 		if (setitimer(ITIMER_VIRTUAL, oldt, NULL) == RET_FAILURE)
