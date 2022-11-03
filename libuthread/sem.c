@@ -62,22 +62,22 @@ int sem_down(sem_t sem)
         if (sem == NULL)
                 return RET_FAILURE;
 
-	preempt_disable();
-	/* Critical section START */
+        preempt_disable();
+        /* Critical section START */
 
         /* If sem count is zero, we block ourselves */
         while (sem->count == 0) {
                 uthread_t self = uthread_current();
                 queue_enqueue(sem->q_blocked, self);
-		/* Crtical section END */
-		preempt_enable();
+                /* Crtical section END */
+                preempt_enable();
                 uthread_block();
         }
 
         sem->count--;
 
-	/* Crtical section END */
-	preempt_enable();
+        /* Crtical section END */
+        preempt_enable();
 
         return RET_SUCCESS;
 }
@@ -87,21 +87,21 @@ int sem_up(sem_t sem)
         if (sem == NULL)
                 return RET_FAILURE;
         
-	preempt_disable();
-	/* Critical section START */
+        preempt_disable();
+        /* Critical section START */
 
         /* unblock the oldest thread in q_blocked */
         if (queue_length(sem->q_blocked) != 0) {
                 uthread_t oldest;
                 queue_dequeue(sem->q_blocked, (void**) &oldest);
-		/* Critical section END */
+                /* Critical section END */
 
                 preempt_enable();
-		uthread_unblock(oldest);
+                uthread_unblock(oldest);
         }
         sem->count++;
-	/* Critical section START */
+        /* Critical section START */
 
-	preempt_enable();
+        preempt_enable();
         return RET_SUCCESS;
 }
