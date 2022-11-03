@@ -24,11 +24,14 @@ queue and `queue_iterate()` reports an error if it receives a non-existent
 queue or a `NULL` function.
 
 ### queue_tester.c
-Our queue tester implements 11 test cases across 3 distict categories
+Our queue tester implements 21 test cases across 3 distict categories
 which allow us to verify the proper behavior of our queue library.
-- Error Catching
-- Functionality
-- Miscellaneous
+- Error Catching *(12)*
+	We ensure that each function implemented in `queue.c` return the proper exit code when invalid data is passed in.
+- Functionality *(6)*
+	These test ensure that each function implemented in `queue.c` returns the correft exit code with valid data as well as modifies a tester queue in a way that matches the expexted value.
+- Miscellaneous *(3)*
+
 
 ## uthread API
 
@@ -55,7 +58,7 @@ of 0, and gets blocked. TB calls `sem_up()` on the same semaphore, and awakens
 TA. However, before TA can run again, TC calls `sem_down()` on the semaphore
 and 'snatches' the newly available resource. TA is not reawakened until TC
 releases the resource with `sem_up()`. This can lead to TA being starved if the
-semaphore resource is always getting 'snaTched' before A can execute.
+semaphore resource is always getting 'snatched' before A can execute, in order to avoid starvation the oldest thread in `q_blocked`  is woken up. 
 
 ### sem_corner.c
 
