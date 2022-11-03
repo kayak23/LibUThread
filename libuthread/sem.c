@@ -64,13 +64,18 @@ int sem_down(sem_t sem)
         if (sem == NULL)
                 return RET_FAILURE;
 
+	preempt_disable();
         /* If sem count is zero, we block ourselves */
         while (sem->count == 0) {
                 uthread_t self = uthread_current();
                 queue_enqueue(sem->q_blocked, self);
+		preempt_enable();
                 uthread_block();
         }
+
         sem->count--;
+	preempt_enable();
+
         return RET_SUCCESS;
 }
 
@@ -81,12 +86,16 @@ int sem_up(sem_t sem)
         if (sem == NULL)
                 return RET_FAILURE;
         
+	preempt_disable();
         /* unblock the oldest thread in q_blocked */
         if (queue_length(sem->q_blocked) != 0) {
+		preempt_enable();
                 uthread_t oldest;
                 queue_dequeue(sem->q_blocked, (void**) &oldest);
                 uthread_unblock(oldest);
+		preemp
         }
         sem->count++;
+	preempt_enable();
         return RET_SUCCESS;
 }
