@@ -32,7 +32,11 @@
 #define T_BLOCKED 	3
 #define T_EXITED	4
 
-/* Changed from stack_t to void */
+/*
+ * uthread_tcb struct keeps track of the thread context.
+ * uthread_tcb contains a pointer to the context stact
+ * as well as a variagble to keep track of the state of thread.
+ */
 struct uthread_tcb {
 	uthread_ctx_t *context;
 	void *stack;
@@ -49,37 +53,35 @@ struct uthread_tcb *uthread_current(void)
 
 void uthread_yield(void)
 {
+	/* Disable Interrupts when entering the critical section */
 	preempt_disable();
-	//fprintf(stderr, "[yield] Beginning yield procedure\n");
 	struct uthread_tcb *tail = curr_thread;
 	if (curr_thread->state == T_RUNNING)
 		curr_thread->state = T_READY;
-	//fprintf(stderr, "[yield] State codes set\n");
+
 	do {
 		queue_enqueue(thread_queue, curr_thread);
-		//fprintf(stderr, "[yield] Thread enqueued\n");
+
 		queue_dequeue(thread_queue, (void**)&curr_thread);
 	} while (curr_thread->state != T_READY);
-	//fprintf(stderr, "[yield] Thread dequeued\n");
-	//if (curr_thread == NULL)
-	//	fprintf(stderr, "[yield] Error! curr_thread is null!\n");
-	//fprintf(stderr, "[yield] Switching context\n");
 	curr_thread->state = T_RUNNING;
-	preempt_enable(); //always the possibility that there a SIGVTALRM is received here *skull emoji*
+	/* Reenable interrupts.
+	 * Always the possibility that there a SIGVTALRM 
+	 * is received here *skull emoji*
+	 */
+	preempt_enable();
 	uthread_ctx_switch(tail->context, curr_thread->context);
-	//fprintf(stderr, "[yield] Yield procedure completed\n");
 }
 
 void uthread_exit(void)
 {
-	//fprintf(stderr, "[exit] A thread was terminated\n");
         curr_thread->state = T_EXITED;
         uthread_yield();
 }
 
 int uthread_create(uthread_func_t func, void *arg)
-{
-	//fprintf(stderr, "[ucreate] Creating a thread\n");
+{	
+	/* Allocate necessary space on head for a thread */
         struct uthread_tcb *new_thread;
         if ((new_thread = malloc(sizeof(struct uthread_tcb))) == NULL)
 		return RET_FAILURE;
@@ -89,30 +91,26 @@ int uthread_create(uthread_func_t func, void *arg)
 		return RET_FAILURE;
         if (uthread_ctx_init(new_thread->context, new_thread->stack, func, arg) < 0)
                 return RET_FAILURE;
+
+	/* New thread is ready to run */
         new_thread->state = T_READY;
+
+	/* Toggle interrupts for critical section */
 	preempt_disable();
         queue_enqueue(thread_queue, new_thread);
 	preempt_enable();
-	//fprintf(stderr, "[ucreate] Created a thread\n");
         return RET_SUCCESS;
 }
 
 static void delete_zombies(queue_t queue, void *data)
 {
-	//fprintf(stderr, "[DZ] Deleting zombies\n");
 	struct uthread_tcb *thread = data;
-	//fprintf(stderr, "[DZ] Thread code: %d\n", thread->state);
-	if (thread->state == T_EXITED)
-	{
-		//fprintf(stderr, "[DZ] Found a zombie!\n");
+	if (thread->state == T_EXITED) {
 		queue_delete(queue, thread);
 		free(thread->context);
 		uthread_ctx_destroy_stack(thread->stack);
 		free(thread);
-		//fprintf(stderr, "[DZ] Beheaded a zombie.\n");
 	}
-	//fprintf(stderr, "[DZ] Finished deleting zombies\n");
-
 }
 
 int uthread_run(bool preempt, uthread_func_t func, void *arg)
@@ -128,17 +126,16 @@ int uthread_run(bool preempt, uthread_func_t func, void *arg)
 	/* Build the initial thread */
 	if (uthread_create(func, arg) < 0)
 		return RET_FAILURE;
+
         /* Begin the idle loop */
-	//int i = 0;
 	preempt_start(preempt);
 	while (queue_length(thread_queue)) {
-		//fprintf(stderr, "[idle] Entering cycle %d\n", i);
 		preempt_disable();
 		queue_iterate(thread_queue, delete_zombies);
 		preempt_enable();
 		uthread_yield();
-		//fprintf(stderr, "[idle] Exiting cycle %d\n", i++);
 	}
+	
 	/* cleanup */
 	preempt_stop();
         uthread_ctx_destroy_stack(curr_thread->stack);

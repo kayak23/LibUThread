@@ -47,6 +47,16 @@ void test_create(void)
 	queue_destroy(q);
 }
 
+static void q_print(queue_t queue, void *data)
+{
+	printf("%s\n", (char*)data);
+}
+
+static void q_delete(queue_t queue, void *data)
+{
+	queue_delete(queue, data);
+}
+
 /* Ensure destroy returns failure when appropriate */
 void test_destroy_error(void)
 {
