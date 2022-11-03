@@ -1,83 +1,163 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h> //remove after debug version
 
+#ifndef QUEUE_H
+#define QUEUE_H
 #include "queue.h"
+#endif
 
+#ifndef RETVALS
+#define RETVALS
 #define RET_SUCCESS 0
 #define RET_FAILURE -1
+#endif
 
-/* Struct queue is implemented as a singly linked list.
- * data is the void pointer to the contents of the item
- * next points to the next item in the queue
- * head points to the front of the queue
- * tail points to the tail of the queue
- */
-struct queue {
+typedef struct q_node* node_t;
+
+struct q_node {
+	node_t next;
+	node_t prev;
 	void *data;
-	queue_t next;
-	queue_t head;
-	queue_t tail;
+};
+
+struct queue {
+	node_t head;
+	node_t tail;
+	int len;
 };
 
 queue_t queue_create(void)
 {
-	queue_t queue;
-	if((queue = malloc(sizeof(struct queue))) == NULL)
+	queue_t q;
+	if((q = malloc(sizeof(struct queue))) == NULL)
 		return NULL;
-	queue->next = NULL;
-	queue->data = NULL;
-	queue->head = queue;
-	queue->tail = queue;
-	return queue;
+	q->head = NULL;
+	q->tail = NULL;
+	q->len = 0;
+	return q;
 }
 
 int queue_destroy(queue_t queue)
 {
-	/* Either the queue DNE or the queue has data */
-	if(queue == NULL || queue->head->data != NULL)
+	if (queue == NULL || queue->len != 0) 
 		return RET_FAILURE;
 	free(queue);
-	return RET_SUCCESS;
+        return RET_SUCCESS;
 }
 
 int queue_enqueue(queue_t queue, void *data)
 {
-	if(queue == NULL || data == NULL)
+	node_t node;
+	if (queue == NULL || data == NULL) 
 		return RET_FAILURE;
-	if((queue->tail->next = malloc(sizeof(struct queue))) == NULL)
+	if((node = malloc(sizeof(struct q_node))) == NULL)
 		return RET_FAILURE;
-	queue->data = data;
-	queue->tail = queue->tail->next;
-	queue->tail->next->data = NULL;
-	queue->tail->next->next = NULL;
-	queue->tail->next->head = queue->head;
-	queue->tail->next->tail = queue->tail->next;
-	return RET_SUCCESS;
+	//fprintf(stderr, "[enqueue] Beginning enqueue procedure\n");
+        node->data = data;
+        node->next = NULL;
+        node->prev = NULL;
+	//fprintf(stderr, "[enqueue] Values init'd\n");
+        if (queue->len == 0) {
+                queue->head = node;
+                queue->tail = node;
+        } else {
+		/*if(queue->tail == NULL) {
+			fprintf(stderr, "[enqueue] Error! Null tail pointer!\n");
+			return RET_FAILURE;
+		}*/
+		//fprintf(stderr, "[enqueue] Setting queue params...");
+                queue->tail->next = node;
+		//fprintf(stderr, "tail->next done...");
+                node->prev = queue->tail;
+		//fprintf(stderr, "node->prev done...");
+                queue->tail = node;
+		//fprintf(stderr, "queue->tail done\n");
+        }
+        queue->len++;
+	//fprintf(stderr, "[enqueue] Enqueue procedure completed\n");
+        return RET_SUCCESS;
 }
 
 int queue_dequeue(queue_t queue, void **data)
 {
-	if(queue == NULL || data == NULL)
+        if (queue == NULL || data == NULL || queue_length(queue) == 0) 
 		return RET_FAILURE;
-	if(queue->head->data == NULL)
-		return RET_FAILURE;
+
 	*data = queue->head->data;
-	queue->head = queue->next;
+	node_t new_head = queue->head->next;
+
+        queue->head->data = NULL;
+        queue->head->next = NULL;
+        queue->head->prev = NULL;
+	free(queue->head);
+        queue->head = new_head;
+	
+        /* If queue is empty */
+        if (queue->head == NULL)
+                queue->tail = NULL;
+        else
+                queue->head->prev = NULL;
+
+        queue->len--;
+	//fprintf(stderr, "[dequeue] Queue size is now %d\n", queue->len);
+        return RET_SUCCESS;
 }
 
 int queue_delete(queue_t queue, void *data)
 {
-	/* TODO Phase 1 */
+	if (queue == NULL || data == NULL)
+		return RET_FAILURE;
+	node_t iter = queue->head;
+	while (iter != NULL) {
+		if (iter->data == data) {
+			if (iter != queue->tail)
+				iter->next->prev = iter->prev;
+			if (iter != queue->head)
+				iter->prev->next = iter->next;
+			if (iter == queue->head)
+				queue->head = iter->next;
+			if (iter == queue->tail)
+				queue->tail = iter->prev;
+			iter->next = NULL;
+			iter->prev = NULL;
+			iter->data = NULL;
+			queue->len--;
+			free(iter);
+			return RET_SUCCESS;
+		}
+		iter = iter->next;
+	}
+	return RET_FAILURE;
 }
 
 int queue_iterate(queue_t queue, queue_func_t func)
 {
-	/* TODO Phase 1 */
+	if (queue == NULL || func == NULL)
+		return RET_FAILURE;
+	node_t iter = queue->head;
+	node_t next;
+	while (iter != NULL) {
+		next = iter->next;
+		func(queue, iter->data);
+		iter = next;
+	}
+	return RET_SUCCESS;
 }
 
 int queue_length(queue_t queue)
 {
-	/* TODO Phase 1 */
+        return queue->len;
 }
 
+/*
+static void q_print(queue_t queue, void *data)
+{
+	printf("%s\n", (char*)data);
+}
+
+static void q_delete(queue_t queue, void *data)
+{
+	queue_delete(queue, data);
+}*/

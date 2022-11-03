@@ -1,6 +1,22 @@
 # Target library
-lib := libuthread.a
+lib 	:= libuthread.a
+objs 	:= queue.o context.o uthread.o preempt.o sem.o 
+
+CC		:= gcc
+CFLAGS	:= -Wall -Wextra -Werror -MMD
+CFLAGS	+= -g
 
 all: $(lib)
 
-## TODO: Phase 1
+deps := $(patsubst %.o,%.d,$(objs))
+-include $(deps)
+
+$(lib): $(objs)
+	@ar rcs $(lib) $(objs)
+
+%.o: %.c 
+	@$(CC) $(CFLAGS) -c -o $@ $<	
+
+clean: 
+	@echo "CLEAN"
+	@rm -f $(lib) $(objs) $(deps)

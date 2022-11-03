@@ -9,8 +9,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <sem.h>
-#include <uthread.h>
+#include "sem.h"
+#include "uthread.h"
 
 sem_t sem1;
 sem_t sem2;
