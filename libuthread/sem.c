@@ -89,11 +89,10 @@ int sem_up(sem_t sem)
 	preempt_disable();
         /* unblock the oldest thread in q_blocked */
         if (queue_length(sem->q_blocked) != 0) {
-		preempt_enable();
                 uthread_t oldest;
                 queue_dequeue(sem->q_blocked, (void**) &oldest);
-                uthread_unblock(oldest);
-		preemp
+                preempt_enable();
+		uthread_unblock(oldest);
         }
         sem->count++;
 	preempt_enable();
