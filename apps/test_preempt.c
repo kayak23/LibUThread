@@ -3,28 +3,36 @@
 
 #include "uthread.h"
 
-static int num_interrupts;
+#define LONGEST 36
 
-static void increment(void *arg)
+static int interrupts;
+static int format;
+
+static void interrupt(void *arg)
 {
 	(void)arg;
-	num_interrupts++;
-	if(num_interrupts < 1000)
-		uthread_create(increment, NULL);
+	interrupts = 1;
 }
 
+/* greedy never yields so it will stay in the loop
+ * until interrupt is scheduled. This can only happen
+ * if the virtual timer forcibly yields greedy.
+ * */
 static void greedy(void *arg)
 {
 	(void)arg;
-	int chars, i;
-	uthread_create(increment, NULL);
-	fprintf(stdout, "I have been interrupted ");
-	while(num_interrupts < 1000)
-	{
-		fprintf(stdout, "%d times.%n", num_interrupts, &chars);
-		for(i = 0; i < chars; i++) fprintf(stdout, "\b");
+	int i;
+	int first;
+	fprintf(stdout, "*** TEST Preemption ***%n", &format);
+	fflush(stdout);
+	while (interrupts != 0) {
+		if (first == 0) {
+			first = 1;
+			uthread_create(interrupt, NULL);
+		}
 	}
-	fprintf(stdout, "\n");
+	for (i = 0; i < LONGEST-format; i++) fprintf(stdout, " ");
+	fprintf(stdout, " ... \033[32m[PASS]\033[0m\n");
 }
 
 int main(void)
