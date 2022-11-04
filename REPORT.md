@@ -1,5 +1,5 @@
-# USER-LEVEL THREAD LIBRARY
-Authors: , Rafael Millan
+# LIBUTHREAD: A User-level Thread Library
+##### Authors: _Ryan Stear, SID: 917196751; Rafael Millan, SID: 915769588_
 
 ## Abstract
 Our User-Level Thread Libray provides a complete interface for
@@ -11,18 +11,26 @@ Our Library allows the user to:
 	- Preemtion is used to provide an interrupt based scheduler.
 - Syncronize resource usage among threads with semaphores.
 
-## queue API
-We implemented our queue using a doubuly linked list. We defined a `queue`
+## Implementation
+
+### Queue API
+We implemented our queue using a doubly linked list. We defined a `queue`
 structure as a linked list of `q_node` data structures with a void pointer
 containing the node data. Additionally, each node contains pointer to its next
-and previous element in the queue. In this case, each node prepresents a thread
+and previous element in the queue. In this case, each node represents a thread
 in our program. Our `queue` struct keeps track of the head and tail pointers of
 the queue. This allows us to implement the `enqueue` and `dequeue` operations
-in O(1). 
+in O(1).
 
-## uthread API
+### Uthread API
+LIBUTHREAD also includes a thread manager for interacting with the thread library. The uthread API supports the following interactions by an application/thread with the thread library:
+* The application/thread seeks to create and/or run new threads.
+* The application/thread seeks to get the current thread.
+* The application/thread seeks to change the state of itself or other threads.
+* The application/thread seeks to yield its processor time.
+In order to manage these interactions, the uthread API organizes each of the current threads into thread data structures (henceforth referred to simply as 'thread control blocks'; see Notes on the Thread Control Block).
 
-## semaphore API
+### Semaphore API
 We based our implementation off of the examples shown in class, primarily form
 `sem_up()` and `sem_down()`. We define a `semaphore` struct as a data structure
 which keeps track of a queue of blocked threads `q_blocked`, as well as an
@@ -45,6 +53,6 @@ of 0, and gets blocked. TB calls `sem_up()` on the same semaphore, and awakens
 TA. However, before TA can run again, TC calls `sem_down()` on the semaphore
 and 'snatches' the newly available resource. TA is not reawakened until TC
 releases the resource with `sem_up()`. This can lead to TA being starved if the
-semaphore resource is always getting 'snaTched' before A can execute. 
+semaphore resource is always getting 'snaTched' before A can execute.
 
-## preemption
+### Preemption
