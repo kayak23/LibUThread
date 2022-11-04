@@ -155,8 +155,8 @@ of 0, and gets blocked. TB calls `sem_up()` on the same semaphore, and awakens
 TA. However, before TA can run again, TC calls `sem_down()` on the semaphore
 and 'snatches' the newly available resource. TA is not reawakened until TC
 releases the resource with `sem_up()`.  This can lead to TA being starved if the
-semaphore resource is always getting 'snatched' before A can execute, in order to avoid starvation the oldest thread in `q_blocked`  is woken up. 
-
+semaphore resource is always getting 'snatched' before A can execute, in order
+to avoid starvation the oldest thread in `q_blocked`  is woken up. 
 
 ### Preemption API
 Additionally, LIBUTHREAD supports the use of preemptive scheduling to forcibly
