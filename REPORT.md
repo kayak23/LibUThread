@@ -28,7 +28,10 @@ LIBUTHREAD also includes a thread manager for interacting with the thread librar
 * The application/thread seeks to get the current thread.
 * The application/thread seeks to change the state of itself or other threads.
 * The application/thread seeks to yield its processor time.
-In order to manage these interactions, the uthread API organizes each of the current threads into thread data structures (henceforth referred to simply as 'thread control blocks'; see Notes on the Thread Control Block).
+In order to manage these interactions, the uthread API organizes each of the current threads into thread data structures (henceforth referred to simply as 'thread control blocks'; see Notes on Threads). The thread manager maintains a queue (first in, first out) of thread control blocks to receive processor time.
+
+##### Creating and Running New Threads
+**uthread_run(bool, uthread_func_t, void*):** Before the application can interact with the thread library, the application must start the thread manager by executing this function.
 
 ### Semaphore API
 We based our implementation off of the examples shown in class, primarily form
