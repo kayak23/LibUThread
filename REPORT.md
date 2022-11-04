@@ -19,7 +19,12 @@ containing the node data. Additionally, each node contains pointer to its next
 and previous element in the queue. In this case, each node represents a thread
 in our program. Our `queue` struct keeps track of the head and tail pointers of
 the queue. This allows us to implement the `enqueue` and `dequeue` operations
-in O(1).
+in O(1). Error handling ensures that valid arguments are passed into the queue
+library funrctions. Enqueuing or dequeueing as well as deleting into a queue
+that does not exists or using invalid or `NULL` data will report a failure.
+Additionally an error occurs when calling `queue_destroy()` on a non-empty
+queue and `queue_iterate()` reports an error if it receives a non-existent
+queue or a `NULL` function.
 
 ### Uthread API
 LIBUTHREAD also includes a thread manager for interacting with the thread
@@ -108,7 +113,7 @@ TCB is set to T_EXITED and the thread yields its processor time.
 **void uthread_block():**
 This function sets the status data member of the current thread's TCB to
 T_BLOCKED and then yields its processor time.
-
+	These test cases perform possible scenario sush as enqueueing and dequeueing many threads within a loop, or modifying the values of the queue with`1queue_iterate()`.
 **void uthread_unblock(struct uthread_tcb*):**
 This function sets the status data member of the TCB pointed to by the sole
 parameter to T_READY.
@@ -146,8 +151,9 @@ There is a corner case where TA calls `sem_down()` on a semaphore with a count
 of 0, and gets blocked. TB calls `sem_up()` on the same semaphore, and awakens
 TA. However, before TA can run again, TC calls `sem_down()` on the semaphore
 and 'snatches' the newly available resource. TA is not reawakened until TC
-releases the resource with `sem_up()`. This can lead to A being starved if the
-semaphore resource is always getting 'snatched' before A can execute.
+releases the resource with `sem_up()`.  This can lead to TA being starved if the
+semaphore resource is always getting 'snatched' before A can execute, in order to avoid starvation the oldest thread in `q_blocked`  is woken up. 
+
 
 ### Preemption API
 Additionally, LIBUTHREAD supports the use of preemptive scheduling to forcibly
