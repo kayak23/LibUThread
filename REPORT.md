@@ -43,29 +43,30 @@ thread control blocks to receive processor time.
 ##### Notes on Threads
 A thread is represented in the uthread API by its TCB. A TCB has the following
 data members:
-* A uthread_ctx_t data member containing the context of the thread (called
-  'context').
+* A `uthread_ctx_t` data member containing the context of the thread (called 
+'context').
 * A void pointer data member pointing to the stack for the thread (called
   'stack').
 * An integer data member representing the state of the thread (called 'state').
 There are four possible states for a thread:
-1. T_RUNNING: The thread is currently using the processor.
-2. T_READY: The thread is ready to have processor time.
-3. T_BLOCKED: The thread is currently blocked and cannot receive more processor
-   time.
-4. T_EXITED: The thread has finished its designated task and cannot receive
-more processor time. Additionally, the thread is subject to deletion.
-Exited threads are deleted by the idle thread, which executes the function
-queue_iterate(), passing the TCB queue and a unique queue_func_t function
-called delete_zombies() as parameters. delete_zombies() deletes a thread if its
-status is T_EXITED, and queue_iterate() will execute this function on each
-thread in the TCB queue.
+1. `T_RUNNING`: The thread is currently using the processor.
+2. `T_READY`: The thread is ready to have processor time.
+3. `T_BLOCKED`: The thread is currently blocked and cannot receive more 
+processor time.
+4. `T_EXITED`: The thread has finished its designated task and cannot
+receive more processor time. Additionally, the thread is subject to
+deletion. Exited threads are deleted by the idle thread, which executes
+the function `queue_iterate()`, passing the TCB queue and a unique
+queue_func_t function called `delete_zombies()` as parameters.
+`delete_zombies()` deletes a thread if its status is `T_EXITED`, and
+`queue_iterate()` will execute this function on each thread in the TCB
+queue.
 
 ##### Creating and Running New Threads
-**int uthread_run(bool, uthread_func_t, void*):**
-Before the application can interact with the thread library, the application
-must start the thread manager by executing this function. The function takes
-three input parameters:
+`int uthread_run(bool, uthread_func_t, void*)`:
+Before the application can interact with the thread library, the 
+application must start the thread manager by executing this function. The
+function takes three input parameters:
 * A boolean parameter to enable preemption, henceforth called 'preempt'(see
 	Peemption API).
 * A unthread_func_t parameter containing the function which the initial thread
@@ -85,7 +86,7 @@ exits the loop, ceases preemption, and returns 0 (RET_SUCCESS). Additionally,
 if the TCB queue, initial thread, or idle thread fail to initialize, this
 function will immediately return with failure code -1 (RET_FAILURE).
 
-**int uthread_create(uthread_func_t, void*):**
+`int uthread_create(uthread_func_t, void*)`:
 This function creates a new thread and enqueues the new thread at the tail of
 the queue. Two parameters are taken as input:
 * A uthread_func_t parameter containing the function which the initial thread
@@ -100,26 +101,28 @@ either the TCB or its data members fail to allocate, the function returns
 failure code -1 (RET_FAILURE).
 
 ##### Getting the Current Thread
-**struct uthread_tcb *uthread_current():**
+`struct uthread_tcb *uthread_current()`:
 This function returns a static global data member called 'curr_thread', which
 is a pointer to the current thread's TCB.
 
 ##### Changing Thread States
-**void uthread_exit():**
+`void uthread_exit()`:
 This function is executed if the current thread completes the function
 specified when it was created. The status data member of the current thread's
 TCB is set to T_EXITED and the thread yields its processor time.
 
-**void uthread_block():**
+`void uthread_block()`:
 This function sets the status data member of the current thread's TCB to
-T_BLOCKED and then yields its processor time.
-	These test cases perform possible scenario sush as enqueueing and dequeueing many threads within a loop, or modifying the values of the queue with`1queue_iterate()`.
-**void uthread_unblock(struct uthread_tcb*):**
+T_BLOCKED and then yields its processor time. These test cases perform possible
+scenario sush as enqueueing and dequeueing many threads within a loop, or
+modifying the values of the queue with`1queue_iterate()`.
+
+`void uthread_unblock(struct uthread_tcb*)`:
 This function sets the status data member of the TCB pointed to by the sole
 parameter to T_READY.
 
 ##### Yielding
-**void uthread_yield():**
+`void uthread_yield()`:
 This function yields the current thread's processor time. Since this is a
 critical section of code, preemption is disabled while the code executes. The
 status of the current thread is set to T_READY if the current thread is not
@@ -162,7 +165,7 @@ implementations for functions to enable, disable, start, and stop the
 preemption timer.
 
 ##### Starting and Stopping
-**void preempt_start(bool):**
+`void preempt_start(bool)`:
 If the boolean parameter passed to this function evaluates to false, this
 function does nothing. If true, it initializes five global structures: two
 timeval structures (included in the header sys/time.h), two sigaction
@@ -176,16 +179,16 @@ the current thread to yield, while the old signal behavior is stored in the
 second sigaction structure. Additionally, SIGVTALRM is stored in the sigset_t
 structure.
 
-**void preempt_stop():**
+`void preempt_stop()`:
 If 'enabled' is false, this function does nothing. Otherwise, the current timer
 is disabled, the default signal behavior and former timer settings are
 restored, and each of the five structures allocated in preempt_start() are
 freed.
 
 ##### Enabling and Disabling
-**preempt_disable*():**
+`preempt_disable*()`:
 If 'enabled' is false, this function does nothing. Otherwise, the signals
 within the global sigset_t structure are set to be blocked.
-**preempt_enable():**
+`preempt_enable()`:
 If 'enabled' is false, this function does nothing. Otherwise, the signals
 within the global sigset_t structure are set to be unblocked.
