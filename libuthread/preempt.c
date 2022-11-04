@@ -44,16 +44,14 @@ void alarm_yield(int signum)
 
 void preempt_disable(void)
 {
-        if (enabled) {
+        if (enabled)
                 pthread_sigmask(SIG_BLOCK, blocker, NULL);
-        }
 }
 
 void preempt_enable(void)
 {
-        if (enabled) {
+        if (enabled)
                 pthread_sigmask(SIG_UNBLOCK, blocker, NULL);
-        }
 }
 
 void preempt_start(bool preempt)

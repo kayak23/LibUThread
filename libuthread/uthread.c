@@ -61,15 +61,10 @@ void uthread_yield(void)
 
         do {
                 queue_enqueue(thread_queue, curr_thread);
-
                 queue_dequeue(thread_queue, (void**)&curr_thread);
         } while (curr_thread->state != T_READY);
         curr_thread->state = T_RUNNING;
-        /* 
-         * Reenable interrupts.
-         * Always the possibility that there a SIGVTALRM 
-         * is received here *skull emoji*
-         */
+        /* Reenable interrupts */
         preempt_enable();
         uthread_ctx_switch(tail->context, curr_thread->context);
 }
@@ -82,7 +77,7 @@ void uthread_exit(void)
 
 int uthread_create(uthread_func_t func, void *arg)
 {	
-        /* Allocate necessary space on head for a thread */
+        /* Allocate TCB and respective data members for a thread */
         struct uthread_tcb *new_thread;
         if ((new_thread = malloc(sizeof(struct uthread_tcb))) == NULL)
                 return RET_FAILURE;
